@@ -1,0 +1,3685 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>초등 5학년 점대칭도형 그리기 마스터</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Jua&family=Noto+Sans+KR:wght@400;600;700;900&display=swap');
+    
+    * {
+      font-family: 'Noto Sans KR', sans-serif;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    
+    .font-title {
+      font-family: 'Jua', sans-serif;
+    }
+    
+    canvas {
+      touch-action: none;
+    }
+
+    .glass-card {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(8px);
+    }
+
+    /* 반응형 및 터치/클릭 버튼 스타일 */
+    .touch-btn {
+      min-height: 42px;
+      touch-action: manipulation;
+    }
+
+    .tool-btn {
+      transition: all 0.2s ease;
+    }
+    .tool-btn.active {
+      background-color: #4f46e5;
+      color: #ffffff;
+      box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.3);
+    }
+
+    /* 왁뿌볼 젤리 바운스 애니메이션 */
+    @keyframes wakppu-pulse {
+      0%, 100% { transform: scale(1) rotate(0deg); }
+      50% { transform: scale(1.04) rotate(1.5deg); }
+    }
+    @keyframes jelly-boing {
+      0% { transform: scale(1, 1); }
+      30% { transform: scale(1.22, 0.78); }
+      50% { transform: scale(0.88, 1.12); }
+      70% { transform: scale(1.04, 0.96); }
+      100% { transform: scale(1, 1); }
+    }
+    .jelly-active {
+      animation: jelly-boing 0.6s ease;
+    }
+
+    /* 유기적 젤리 모핑 애니메이션 */
+    @keyframes wakppu-wobble {
+      0%, 100% { border-radius: 50% 50% 50% 50% / 50% 50% 50% 50%; }
+      25% { border-radius: 53% 47% 52% 48% / 48% 53% 47% 52%; }
+      50% { border-radius: 47% 53% 48% 52% / 52% 48% 53% 47%; }
+      75% { border-radius: 52% 48% 54% 46% / 49% 51% 49% 51%; }
+    }
+    .wakppu-morph {
+      animation: wakppu-pulse 3.5s infinite ease-in-out, wakppu-wobble 5s infinite ease-in-out;
+    }
+
+    /* 왁뿌볼 댄스 애니메이션 */
+    @keyframes wakppu-dance {
+      0% { transform: scale(1) translateY(0) rotate(0deg); }
+      25% { transform: scale(1.06, 0.94) translateY(-6px) rotate(-3deg); }
+      50% { transform: scale(0.95, 1.05) translateY(-14px) rotate(3deg); }
+      75% { transform: scale(1.04, 0.96) translateY(-4px) rotate(-2deg); }
+      100% { transform: scale(1) translateY(0) rotate(0deg); }
+    }
+    .dancing-wakppu {
+      animation: wakppu-dance 0.48s infinite ease-in-out !important;
+    }
+
+    @keyframes float-note {
+      0% { transform: translateY(0) scale(0.6) rotate(0deg); opacity: 1; }
+      100% { transform: translateY(-75px) scale(1.2) rotate(25deg); opacity: 0; }
+    }
+    .music-note-particle {
+      position: absolute;
+      pointer-events: none;
+      animation: float-note 1.2s forwards ease-out;
+      font-weight: 900;
+    }
+    .equalizer-bar {
+      transition: height 0.1s ease;
+    }
+
+    /* PC 크롬 최적화 스크롤바 */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #f1f5f9;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+  </style>
+</head>
+<body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col justify-between overflow-x-hidden">
+
+  <!-- 시작 전 이름 및 왁뿌볼 선택 인트로 모달 -->
+  <div id="startScreenModal" class="fixed inset-0 z-50 bg-indigo-950/85 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl p-6 sm:p-8 max-w-lg w-full text-center shadow-2xl border-4 border-amber-400 max-h-[95vh] overflow-y-auto">
+      <div class="w-16 h-16 mx-auto bg-amber-400 text-indigo-950 text-3xl rounded-3xl flex items-center justify-center shadow-lg mb-3">
+        <i class="fa-solid fa-shapes"></i>
+      </div>
+      <span class="text-xs sm:text-sm bg-indigo-100 text-indigo-800 font-bold px-3 py-1 rounded-full">초등학교 5학년 수학 · 합동과 대칭</span>
+      <h2 class="text-2xl sm:text-3xl font-title text-slate-800 mt-2 mb-2">점대칭도형 마스터에 온 것을 환영해요!</h2>
+      <p class="text-xs sm:text-sm text-slate-500 mb-5 leading-relaxed">
+        이름을 적고 함께 모험을 떠날 <b>나만의 왁뿌볼</b>을 골라보세요. 문제를 맞힐 때마다 왁뿌볼이 자라고 신기한 <b>소리 & 음식 재료</b>를 얻어요!
+      </p>
+
+      <form onsubmit="handleStartGame(event)" class="space-y-4">
+        <!-- 1. 학생 이름 입력 -->
+        <div class="text-left">
+          <label for="studentNameInput" class="block text-xs sm:text-sm font-bold text-slate-700 mb-1.5 ml-1">
+            <i class="fa-solid fa-user-pen mr-1 text-indigo-600"></i> 학생 이름을 입력해 주세요
+          </label>
+          <input 
+            type="text" 
+            id="studentNameInput" 
+            required 
+            placeholder="예: 5학년 2반 김수학" 
+            maxlength="15"
+            class="w-full px-4 py-3 rounded-2xl border-2 border-indigo-200 focus:border-indigo-600 focus:outline-none text-base font-bold text-slate-800 placeholder-slate-400 transition shadow-inner"
+          />
+        </div>
+
+        <!-- 2. 함께할 첫 왁뿌볼 선택 -->
+        <div class="text-left">
+          <label class="block text-xs sm:text-sm font-bold text-slate-700 mb-2 ml-1 flex items-center justify-between">
+            <span><i class="fa-solid fa-wand-magic-sparkles mr-1 text-pink-500"></i> 나의 첫 왁뿌볼 선택하기</span>
+            <span class="text-[11px] text-pink-600 font-normal">클릭해서 고르기</span>
+          </label>
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2" id="starterWakppuSelector">
+            <button type="button" onclick="selectStarterWakppu('pink')" id="starter_pink" class="starter-card p-2.5 rounded-2xl border-2 border-pink-500 bg-pink-50 flex flex-col items-center justify-center transition scale-105 shadow-sm">
+              <div class="w-12 h-12 rounded-full mb-1.5 shadow flex items-center justify-center border-2 border-white relative overflow-hidden" style="background: radial-gradient(circle at 35% 35%, #f472b6, #db2777);">
+                <svg viewBox="0 0 100 100" class="w-10 h-10 drop-shadow">
+                  <ellipse cx="28" cy="56" rx="7" ry="4" fill="#fb7185" opacity="0.6"/>
+                  <ellipse cx="72" cy="56" rx="7" ry="4" fill="#fb7185" opacity="0.6"/>
+                  <circle cx="33" cy="46" r="6.5" fill="#1e1b4b"/>
+                  <circle cx="31" cy="43.5" r="2.5" fill="#ffffff"/>
+                  <circle cx="67" cy="46" r="6.5" fill="#1e1b4b"/>
+                  <circle cx="65" cy="43.5" r="2.5" fill="#ffffff"/>
+                  <path d="M 43 52 Q 50 61 57 52" fill="none" stroke="#1e1b4b" stroke-width="3" stroke-linecap="round"/>
+                </svg>
+              </div>
+              <span class="text-xs font-black text-slate-800">말랑 핑크</span>
+              <span class="text-[9px] text-pink-600">딸기 바스락</span>
+            </button>
+
+            <button type="button" onclick="selectStarterWakppu('purple')" id="starter_purple" class="starter-card p-2.5 rounded-2xl border-2 border-slate-200 bg-slate-50 flex flex-col items-center justify-center transition hover:bg-purple-50">
+              <div class="w-12 h-12 rounded-full mb-1.5 shadow flex items-center justify-center border-2 border-white relative overflow-hidden" style="background: radial-gradient(circle at 35% 35%, #c084fc, #7e22ce);">
+                <svg viewBox="0 0 100 100" class="w-10 h-10 drop-shadow">
+                  <ellipse cx="28" cy="56" rx="7" ry="4" fill="#e879f9" opacity="0.6"/>
+                  <ellipse cx="72" cy="56" rx="7" ry="4" fill="#e879f9" opacity="0.6"/>
+                  <polygon points="33,39 35,44 40,46 35,48 33,53 31,48 26,46 31,44" fill="#fef08a"/>
+                  <polygon points="67,39 69,44 74,46 69,48 67,53 65,48 60,46 65,44" fill="#fef08a"/>
+                  <path d="M 44 54 Q 50 49 56 54" fill="none" stroke="#ffffff" stroke-width="3" stroke-linecap="round"/>
+                </svg>
+              </div>
+              <span class="text-xs font-black text-slate-800">신비 퍼플</span>
+              <span class="text-[9px] text-purple-600">별빛 바스락</span>
+            </button>
+
+            <button type="button" onclick="selectStarterWakppu('blue')" id="starter_blue" class="starter-card p-2.5 rounded-2xl border-2 border-slate-200 bg-slate-50 flex flex-col items-center justify-center transition hover:bg-sky-50">
+              <div class="w-12 h-12 rounded-full mb-1.5 shadow flex items-center justify-center border-2 border-white relative overflow-hidden" style="background: radial-gradient(circle at 35% 35%, #38bdf8, #1d4ed8);">
+                <svg viewBox="0 0 100 100" class="w-10 h-10 drop-shadow">
+                  <ellipse cx="28" cy="56" rx="7" ry="4" fill="#38bdf8" opacity="0.5"/>
+                  <ellipse cx="72" cy="56" rx="7" ry="4" fill="#38bdf8" opacity="0.5"/>
+                  <path d="M 26 47 Q 33 40 40 47" fill="none" stroke="#0f172a" stroke-width="3.5" stroke-linecap="round"/>
+                  <circle cx="67" cy="46" r="6.5" fill="#0f172a"/>
+                  <circle cx="65" cy="43.5" r="2.5" fill="#ffffff"/>
+                  <path d="M 44 53 Q 50 62 56 53" fill="#ffffff" stroke="#0f172a" stroke-width="2.5" stroke-linecap="round"/>
+                </svg>
+              </div>
+              <span class="text-xs font-black text-slate-800">청량 블루</span>
+              <span class="text-[9px] text-sky-600">비닐 바스락</span>
+            </button>
+
+            <button type="button" onclick="selectStarterWakppu('mint')" id="starter_mint" class="starter-card p-2.5 rounded-2xl border-2 border-slate-200 bg-slate-50 flex flex-col items-center justify-center transition hover:bg-emerald-50">
+              <div class="w-12 h-12 rounded-full mb-1.5 shadow flex items-center justify-center border-2 border-white relative overflow-hidden" style="background: radial-gradient(circle at 35% 35%, #34d399, #047857);">
+                <svg viewBox="0 0 100 100" class="w-10 h-10 drop-shadow">
+                  <ellipse cx="28" cy="56" rx="7" ry="4" fill="#6ee7b7" opacity="0.6"/>
+                  <ellipse cx="72" cy="56" rx="7" ry="4" fill="#6ee7b7" opacity="0.6"/>
+                  <path d="M 26 48 Q 33 39 40 48" fill="none" stroke="#064e3b" stroke-width="3.5" stroke-linecap="round"/>
+                  <path d="M 60 48 Q 67 39 74 48" fill="none" stroke="#064e3b" stroke-width="3.5" stroke-linecap="round"/>
+                  <circle cx="50" cy="55" r="4.5" fill="#ec4899"/>
+                </svg>
+              </div>
+              <span class="text-xs font-black text-slate-800">톡톡 민트</span>
+              <span class="text-[9px] text-emerald-600">나뭇잎 바스락</span>
+            </button>
+          </div>
+        </div>
+
+        <button type="submit" class="w-full py-3.5 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white font-title text-xl rounded-2xl shadow-xl shadow-indigo-600/30 transition transform active:scale-95 touch-btn flex items-center justify-center gap-2 mt-2">
+          <span>왁뿌볼과 함께 도전 시작하기!</span>
+          <i class="fa-solid fa-arrow-right"></i>
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- 최종 결과 및 성적표 모달 -->
+  <div id="finalReportModal" class="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-md flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-3xl p-6 sm:p-8 max-w-lg w-full text-center shadow-2xl border-4 border-amber-400 relative">
+      <div class="w-16 h-16 mx-auto bg-amber-100 text-amber-500 text-3xl rounded-2xl flex items-center justify-center mb-3">
+        <i class="fa-solid fa-award"></i>
+      </div>
+      <h2 class="text-2xl font-title text-slate-800 mb-1">점대칭도형 학습 성적표</h2>
+      <p class="text-xs sm:text-sm text-slate-500 mb-4">
+        <span id="reportStudentName" class="font-bold text-indigo-700 text-base">OOO</span> 학생의 학습 결과입니다!
+      </p>
+
+      <div class="bg-amber-50/70 border-2 border-amber-300 rounded-2xl p-4 sm:p-5 mb-5 space-y-3">
+        <div class="text-xs text-amber-800 font-bold tracking-wider">🎉 칭호 수여</div>
+        <div id="reportBadgeTitle" class="text-xl sm:text-2xl font-title text-indigo-900">
+          점대칭도형 탐험가 🏅
+        </div>
+        <div class="grid grid-cols-3 gap-2 pt-2 border-t border-amber-200/80">
+          <div class="bg-white p-2.5 rounded-xl shadow-sm">
+            <span class="text-[10px] text-slate-400 block font-bold">최종 점수</span>
+            <span id="reportScore" class="font-title text-lg sm:text-xl text-amber-500">0점</span>
+          </div>
+          <div class="bg-white p-2.5 rounded-xl shadow-sm">
+            <span class="text-[10px] text-slate-400 block font-bold">맞힌 문제</span>
+            <span id="reportSolvedCount" class="font-title text-lg sm:text-xl text-emerald-600">0개</span>
+          </div>
+          <div class="bg-white p-2.5 rounded-xl shadow-sm">
+            <span class="text-[10px] text-slate-400 block font-bold">정답률</span>
+            <span id="reportAccuracy" class="font-title text-lg sm:text-xl text-indigo-600">100%</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex gap-2">
+        <button onclick="closeFinalReport()" class="flex-1 py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-2xl transition shadow touch-btn">
+          계속 풀기
+        </button>
+        <button onclick="restartApp()" class="px-5 py-3.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-2xl transition touch-btn flex items-center justify-center gap-1.5">
+          <i class="fa-solid fa-rotate-left"></i> 처음부터
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 상단 네비게이션 및 점수판 (PC 크롬 및 태블릿에 맞춘 시인성 향상) -->
+  <header class="bg-indigo-600 text-white shadow-lg sticky top-0 z-30">
+    <div class="max-w-7xl mx-auto px-4 py-2.5 sm:py-3 flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center gap-3">
+        <div class="bg-amber-400 text-indigo-950 font-black p-2.5 rounded-2xl shadow flex items-center justify-center text-xl">
+          <i class="fa-solid fa-shapes"></i>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="text-[11px] sm:text-xs bg-indigo-700/80 px-2 py-0.5 rounded-full font-bold text-amber-300">초등 5학년 2학기 · 합동과 대칭</span>
+            <span id="headerStudentBadge" class="text-xs bg-amber-400/90 text-indigo-950 px-2.5 py-0.5 rounded-full font-bold shadow-sm hidden">
+              👤 학생: <span id="headerStudentName">수학이</span>
+            </span>
+          </div>
+          <h1 class="text-lg sm:text-2xl font-title tracking-wide flex items-center gap-1.5">
+            점대칭도형 마스터
+          </h1>
+        </div>
+      </div>
+
+      <!-- 현황판 및 제어 버튼 -->
+      <div class="flex items-center gap-2 sm:gap-3 flex-wrap">
+        <div class="flex items-center gap-2 sm:gap-4 bg-indigo-800/80 px-3 sm:px-4 py-1.5 rounded-2xl border border-indigo-500/40 text-xs sm:text-sm">
+          <div class="flex flex-col items-center">
+            <span class="text-[10px] text-indigo-200">내 점수</span>
+            <span id="scoreDisplay" class="font-title text-base sm:text-xl text-yellow-300">0점</span>
+          </div>
+          <div class="w-[1px] h-6 bg-indigo-600"></div>
+          <div class="flex flex-col items-center">
+            <span class="text-[10px] text-indigo-200">연속 성공</span>
+            <span id="streakDisplay" class="font-bold text-xs sm:text-base text-emerald-400">🔥 0</span>
+          </div>
+          <div class="w-[1px] h-6 bg-indigo-600"></div>
+          <div class="flex flex-col items-center">
+            <span class="text-[10px] text-indigo-200">현재 난이도</span>
+            <span id="currentLevelBadge" class="font-bold text-[11px] bg-amber-400 text-indigo-900 px-2.5 py-0.5 rounded-full shadow-sm">1단계 (기본)</span>
+          </div>
+          <div class="w-[1px] h-6 bg-indigo-600"></div>
+          <!-- 왁뿌볼 미니 위젯 -->
+          <div class="flex items-center gap-1.5 cursor-pointer hover:opacity-90 transition px-1 py-0.5 rounded-xl hover:bg-white/10" onclick="openWakppuModal()" title="내 왁뿌볼 보기">
+            <div id="headerWakppuBall" class="w-7 h-7 rounded-full border-2 border-white shadow-sm flex items-center justify-center text-[10px] text-white font-black overflow-hidden" style="background: radial-gradient(circle at 35% 35%, #f472b6, #db2777);">
+              🔮
+            </div>
+            <div class="flex flex-col items-start leading-none">
+              <span class="text-[9px] text-amber-200 font-bold">재료 & 음식</span>
+              <span id="headerIngredientCount" class="font-bold text-xs text-white">0개</span>
+            </div>
+          </div>
+        </div>
+
+        <button id="stage3CompleteBtn" onclick="openWakppuShowcaseModal()" class="hidden px-3.5 py-2 bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white font-bold text-xs sm:text-sm rounded-xl shadow-lg shadow-pink-500/30 transition flex items-center gap-1.5 animate-pulse touch-btn">
+          <i class="fa-solid fa-wand-magic-sparkles text-amber-300"></i> 왁뿌볼 완성!
+        </button>
+
+        <button onclick="openFinalReport()" class="px-3.5 py-2 bg-amber-400 hover:bg-amber-300 text-indigo-950 font-bold text-xs sm:text-sm rounded-xl shadow-md transition flex items-center gap-1.5 active:scale-95 touch-btn">
+          <i class="fa-solid fa-flag-checkered"></i> 학습 결과표
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- 메인 학습 영역 (PC 크롬 화면 대화면 12컬럼 최적화) -->
+  <main class="max-w-7xl mx-auto w-full px-3 sm:px-6 py-3 sm:py-4 flex-1 flex flex-col gap-3">
+    
+    <!-- 난이도 탭 & 보조 도구 바 -->
+    <section class="glass-card rounded-2xl p-3 sm:p-4 shadow-sm border border-slate-200 flex flex-wrap items-center justify-between gap-2.5">
+      <div class="flex items-center gap-2 flex-wrap">
+        <span class="text-xs font-bold text-slate-500 mr-1"><i class="fa-solid fa-layer-group mr-1 text-indigo-500"></i>난이도:</span>
+        <button onclick="changeDifficulty(1)" id="diffBtn1" class="diff-btn px-3.5 py-2 text-xs sm:text-sm font-bold rounded-xl transition bg-indigo-600 text-white shadow touch-btn">
+          1단계 (기본) <span id="diffProgress1" class="text-[11px] opacity-90">(0/5)</span>
+        </button>
+        <button onclick="changeDifficulty(2)" id="diffBtn2" class="diff-btn px-3.5 py-2 text-xs sm:text-sm font-bold rounded-xl transition bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed touch-btn">
+          <i class="fa-solid fa-lock text-[11px] mr-1"></i>2단계 (응용) <span id="diffProgress2" class="text-[11px]">(0/5)</span>
+        </button>
+        <button onclick="changeDifficulty(3)" id="diffBtn3" class="diff-btn px-3.5 py-2 text-xs sm:text-sm font-bold rounded-xl transition bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed touch-btn">
+          <i class="fa-solid fa-lock text-[11px] mr-1"></i>3단계 (심화 무제한)
+        </button>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <button onclick="loadNewQuestion()" class="px-3.5 py-2 bg-sky-500 hover:bg-sky-600 text-white text-xs sm:text-sm font-bold rounded-xl shadow transition flex items-center gap-1.5 touch-btn">
+          <i class="fa-solid fa-arrows-rotate"></i> 다른 문제
+        </button>
+        <button onclick="openConceptModal()" class="px-3.5 py-2 bg-amber-500 hover:bg-amber-600 text-white text-xs sm:text-sm font-bold rounded-xl shadow transition flex items-center gap-1.5 touch-btn">
+          <i class="fa-solid fa-lightbulb"></i> 점대칭이란?
+        </button>
+      </div>
+    </section>
+
+    <!-- 메인 그리드 레이아웃 (PC 크롬: 좌측 8 / 우측 4 분할) -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-3 sm:gap-5 flex-1 items-start">
+      
+      <!-- 캔버스 드로잉 보드 (8 컬럼) -->
+      <div class="lg:col-span-8 flex flex-col bg-white rounded-2xl p-3 sm:p-5 shadow-md border border-slate-200 relative">
+        
+        <!-- 상단 툴바: 점 찍기 / 점과 점 잇기 / 보조선 그리기 + 펜 색상 -->
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-2.5 px-1 pb-2 border-b border-slate-100">
+          <div class="flex items-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200 text-xs">
+            <button id="toolPointBtn" onclick="setCurrentTool('point')" class="tool-btn active px-3.5 py-1.5 rounded-lg font-bold flex items-center gap-1.5 touch-btn">
+              <i class="fa-solid fa-location-dot text-emerald-400"></i> 점 찍기
+            </button>
+            <button id="toolLineBtn" onclick="setCurrentTool('line')" class="tool-btn px-3.5 py-1.5 rounded-lg font-bold text-slate-600 hover:text-slate-900 flex items-center gap-1.5 touch-btn">
+              <i class="fa-solid fa-ruler-combined text-indigo-500"></i> 점과 점 잇기
+            </button>
+            <button id="toolPenBtn" onclick="setCurrentTool('pen')" class="tool-btn px-3.5 py-1.5 rounded-lg font-bold text-slate-600 hover:text-slate-900 flex items-center gap-1.5 touch-btn">
+              <i class="fa-solid fa-pencil text-amber-500"></i> 보조선 그리기
+            </button>
+          </div>
+
+          <!-- 펜 컬러 팔레트 & 보조선 지우개 -->
+          <div class="flex items-center gap-1.5">
+            <div id="penColorGroup" class="flex items-center gap-1.5 bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-200">
+              <span class="text-[10px] text-slate-400 font-bold mr-0.5">펜:</span>
+              <button onclick="setPenColor('#f59e0b')" class="w-5 h-5 rounded-full bg-amber-500 border-2 border-white shadow-sm hover:scale-110 transition" title="오렌지"></button>
+              <button onclick="setPenColor('#8b5cf6')" class="w-5 h-5 rounded-full bg-purple-500 border-2 border-white shadow-sm hover:scale-110 transition" title="보라색"></button>
+              <button onclick="setPenColor('#ef4444')" class="w-5 h-5 rounded-full bg-rose-500 border-2 border-white shadow-sm hover:scale-110 transition" title="빨간색"></button>
+              <button onclick="setPenColor('#475569')" class="w-5 h-5 rounded-full bg-slate-600 border-2 border-white shadow-sm hover:scale-110 transition" title="연필색"></button>
+            </div>
+            <button onclick="clearFreehandStrokes()" class="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-bold rounded-lg border border-slate-200 transition touch-btn" title="보조선 지우기">
+              <i class="fa-solid fa-eraser text-rose-500"></i> 펜만 지우기
+            </button>
+          </div>
+        </div>
+
+        <!-- 가이드 안내 문구 & 카운터 -->
+        <div class="flex items-center justify-between mb-2 text-xs sm:text-sm px-1">
+          <div class="flex items-center gap-2">
+            <span id="currentToolStatusDot" class="inline-block w-3 h-3 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span id="currentToolGuideText" class="font-bold text-slate-700 text-xs sm:text-sm">
+              [점 찍기 모드] 모눈 격자를 톡 터치/클릭하여 대응점을 찍으세요.
+            </span>
+          </div>
+          <div class="flex items-center gap-2">
+            <span id="dotProgress" class="text-xs font-bold text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-lg border border-indigo-100">
+              대응점: 0 / 0개
+            </span>
+            <span id="lineProgress" class="text-xs font-bold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-100">
+              선: 0 / 0개
+            </span>
+          </div>
+        </div>
+
+        <!-- 인터랙티브 모눈 캔버스 -->
+        <div class="relative w-full aspect-square max-h-[520px] sm:max-h-[560px] mx-auto bg-amber-50/20 rounded-xl overflow-hidden border-2 border-slate-300 shadow-inner flex items-center justify-center" id="canvasContainer">
+          <canvas id="gridCanvas" class="block w-full h-full cursor-crosshair"></canvas>
+          
+          <div id="rotatingBanner" class="absolute top-4 left-1/2 -translate-x-1/2 bg-indigo-900/90 text-amber-300 px-4 py-2 rounded-full text-xs sm:text-sm font-bold shadow-lg pointer-events-none hidden transition-all duration-300 flex items-center gap-2 z-20">
+            <i class="fa-solid fa-rotate animate-spin"></i> 대칭의 중심을 축으로 180° 회전 중!
+          </div>
+
+          <div id="shapeClosedBadge" class="absolute bottom-4 left-1/2 -translate-x-1/2 bg-emerald-600/95 text-white px-4 py-2 rounded-full text-xs sm:text-sm font-bold shadow-md pointer-events-none hidden transition-all duration-200 flex items-center gap-1.5 z-20">
+            <i class="fa-solid fa-circle-check"></i> 모든 대응점을 찍었습니다! [점과 점 잇기]로 선을 연결해 보세요.
+          </div>
+        </div>
+
+        <!-- 하단 조작 컨트롤 -->
+        <div class="mt-3.5 flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-100">
+          <div class="flex items-center gap-2 flex-wrap">
+            <button onclick="undoLastPoint()" class="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs sm:text-sm font-bold rounded-xl transition flex items-center gap-1.5 border border-slate-300 touch-btn active:scale-95">
+              <i class="fa-solid fa-rotate-left text-rose-500"></i> 점 취소
+            </button>
+            <button onclick="undoLastLine()" class="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs sm:text-sm font-bold rounded-xl transition flex items-center gap-1.5 border border-slate-300 touch-btn active:scale-95">
+              <i class="fa-solid fa-slash text-indigo-500"></i> 선 취소
+            </button>
+            <button onclick="resetCurrentDrawing()" class="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs sm:text-sm font-bold rounded-xl transition flex items-center gap-1.5 border border-slate-300 touch-btn active:scale-95">
+              <i class="fa-solid fa-trash-can text-slate-400"></i> 모두 지우기
+            </button>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <button id="hintBtn" onclick="toggleHint()" disabled class="px-3.5 py-2 bg-slate-200 text-slate-400 text-xs sm:text-sm font-bold rounded-xl transition flex items-center gap-1.5 border border-slate-300 cursor-not-allowed touch-btn active:scale-95">
+              <i class="fa-solid fa-lock text-[11px]"></i> 오답 시 힌트 제공
+            </button>
+            <button id="spinBtn" onclick="playRotationAnimation()" class="px-3.5 py-2 bg-indigo-100 hover:bg-indigo-200 text-indigo-700 text-xs sm:text-sm font-bold rounded-xl transition flex items-center gap-1.5 border border-indigo-300 touch-btn active:scale-95">
+              <i class="fa-solid fa-arrows-spin"></i> 180° 돌려보기
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 우측 사이드바: 미션 안내, 채점, 왁뿌볼 성장 연구소 (4 컬럼) -->
+      <aside class="lg:col-span-4 flex flex-col gap-3">
+        <!-- 문제 설명 및 채점 카드 -->
+        <div class="glass-card rounded-2xl p-4 sm:p-5 shadow-md border border-slate-200 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center gap-2 mb-1.5">
+              <span class="text-xs bg-indigo-100 text-indigo-800 font-black px-2 py-0.5 rounded-md">미션</span>
+              <h3 id="questionTitle" class="font-bold text-base sm:text-lg text-slate-800">도형 완성하기</h3>
+            </div>
+            
+            <p id="questionDescription" class="text-xs sm:text-sm text-slate-600 leading-relaxed mb-3">
+              주어진 파란색 변들의 대응점을 찾아 차례대로 이어 닫힌 점대칭도형을 완성하세요!
+            </p>
+
+            <div class="bg-indigo-50/70 p-3 rounded-xl border border-indigo-100 mb-3 text-xs space-y-1.5">
+              <div class="font-bold text-indigo-900 flex items-center gap-1.5 text-xs">
+                <i class="fa-solid fa-compass-drafting text-indigo-600"></i> 그리기 핵심 꿀팁
+              </div>
+              <ul class="text-slate-600 space-y-1 pl-4 list-disc text-[11px] sm:text-xs">
+                <li><b>[보조선]</b>으로 대칭의 중심까지 칸 수를 세어보세요.</li>
+                <li><b>[점 찍기]</b>로 교차점을 터치/클릭하여 대응점을 찍으세요.</li>
+                <li><b>[점과 점 잇기]</b>로 연결할 두 점을 차례로 눌러 선을 잇습니다.</li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- 채점 버튼 -->
+          <div class="space-y-1.5 pt-1">
+            <button onclick="checkAnswer()" id="submitBtn" class="w-full py-3.5 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-title text-xl tracking-wider rounded-2xl shadow-lg shadow-emerald-500/25 transition active:scale-95 flex items-center justify-center gap-2 touch-btn">
+              <i class="fa-solid fa-circle-check"></i> 채점하기
+            </button>
+            <p id="submitStatusHint" class="text-center text-[11px] text-slate-400">
+              대응점을 찍고 선을 연결해 보세요.
+            </p>
+          </div>
+        </div>
+
+        <!-- 실시간 왁뿌볼 성장 연구소 사이드 위젯 -->
+        <div class="bg-gradient-to-br from-indigo-950 via-slate-900 to-purple-950 text-white rounded-2xl p-4 shadow-lg border border-purple-400/40 flex flex-col justify-between relative overflow-hidden">
+          <div class="absolute -top-10 -right-10 w-28 h-28 bg-pink-500/20 rounded-full blur-2xl pointer-events-none"></div>
+
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs bg-pink-500/80 text-white font-black px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                🔮 내 왁뿌볼 성장 연구소
+              </span>
+              <span id="sideGrowthStageBadge" class="text-[11px] bg-amber-400 text-indigo-950 font-black px-2 py-0.5 rounded-full shadow-sm">
+                🌱 1단계 아기 왁뿌
+              </span>
+            </div>
+            
+            <!-- 실시간 시각적 왁뿌볼 캐릭터 아바타 -->
+            <div class="my-2 py-1 flex flex-col items-center justify-center relative cursor-pointer" onclick="pokeSideWakppu()" title="왁뿌볼 콕 찔러보기!">
+              <div id="sideWakppuAura" class="absolute w-24 h-24 rounded-full bg-gradient-to-tr from-pink-500 to-amber-300 opacity-40 blur-lg transition-all duration-500"></div>
+
+              <div id="sideWakppuBody" class="relative w-24 h-24 rounded-full shadow-xl border-2 border-white/80 flex items-center justify-center transition-all duration-300 wakppu-morph select-none group" style="background: radial-gradient(circle at 35% 35%, #f472b6, #db2777);">
+                <div id="sideWakppuTexture" class="absolute inset-0 rounded-full overflow-hidden pointer-events-none"></div>
+                <div id="sideWakppuParticles" class="absolute inset-0 rounded-full overflow-hidden pointer-events-none flex items-center justify-center"></div>
+                <div id="sideWakppuFace" class="w-16 h-16 pointer-events-none z-10 transition-transform flex items-center justify-center"></div>
+              </div>
+              <span id="sideWakppuReactionText" class="mt-2 text-[11px] text-amber-300 font-bold tracking-tight text-center h-4">
+                문제를 맞히면 재료 & 음식을 얻어요!
+              </span>
+            </div>
+
+            <!-- 넣은 재료 배지 목록 -->
+            <div class="mt-1">
+              <div class="flex items-center justify-between text-[11px] text-purple-200 mb-1">
+                <span>투입된 재료 & 음식 (<span id="sideIngredientCount">0</span>개)</span>
+                <span class="text-[10px] text-amber-300">ASMR 사운드 보유</span>
+              </div>
+              <div id="sideIngredientPills" class="flex flex-wrap gap-1 min-h-[30px] p-2 bg-black/30 rounded-xl border border-white/10 items-center max-h-24 overflow-y-auto">
+                <span class="text-[10px] text-slate-400 italic">문제를 풀고 신기한 재료를 모아보세요!</span>
+              </div>
+            </div>
+          </div>
+
+          <button onclick="openWakppuShowcaseModal()" class="mt-3 w-full py-2.5 bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white font-title text-sm rounded-xl shadow-md transition flex items-center justify-center gap-1.5 active:scale-95 touch-btn">
+            <i class="fa-solid fa-music"></i> 왁뿌볼 연주실 가기
+          </button>
+        </div>
+
+        <!-- 간단 점수 현황 카드 -->
+        <div class="bg-white rounded-2xl p-3.5 shadow-sm border border-slate-200">
+          <div class="flex items-center justify-between text-xs font-bold text-slate-500 mb-1.5">
+            <span>오늘의 학습 현황</span>
+            <button onclick="openFinalReport()" class="text-indigo-600 hover:underline text-[11px]">
+              상세보기 <i class="fa-solid fa-chevron-right text-[9px]"></i>
+            </button>
+          </div>
+          <div class="grid grid-cols-2 gap-2 text-center">
+            <div class="p-2 bg-slate-50 rounded-xl">
+              <span class="text-[10px] text-slate-400 block">해결한 문제</span>
+              <span id="solvedCount" class="font-bold text-indigo-600 text-base">0개</span>
+            </div>
+            <div class="p-2 bg-slate-50 rounded-xl">
+              <span class="text-[10px] text-slate-400 block">정답률</span>
+              <span id="accuracyRate" class="font-bold text-teal-600 text-base">100%</span>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+    </div>
+  </main>
+
+  <!-- 피드백 모달 (내 도형 보기 시 재채점 방지 처리 완료) -->
+  <div id="feedbackModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-3xl p-6 sm:p-7 max-w-sm w-full text-center shadow-2xl transform transition-all scale-95 border-4 border-emerald-400">
+      <div id="modalIcon" class="w-16 h-16 mx-auto rounded-2xl bg-emerald-100 text-emerald-500 flex items-center justify-center text-3xl mb-4">
+        <i class="fa-solid fa-trophy"></i>
+      </div>
+      <h3 id="modalTitle" class="text-xl sm:text-2xl font-title text-slate-800 mb-2">완벽한 점대칭도형!</h3>
+      <p id="modalDesc" class="text-sm text-slate-600 mb-5 leading-relaxed">
+        모든 대응점이 대칭의 중심을 기준으로 정확하게 대칭을 이룹니다.
+      </p>
+      
+      <div id="scoreEarnedBox" class="bg-amber-50 text-amber-900 border border-amber-200 rounded-xl py-2 px-4 text-xs font-bold mb-5 flex items-center justify-center gap-2">
+        <i class="fa-solid fa-star text-amber-500"></i> <span id="earnedScoreText">+100점 획득!</span>
+      </div>
+
+      <div class="flex gap-2">
+        <button id="modalActionBtn" onclick="closeFeedbackAndNext()" class="flex-1 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl transition shadow active:scale-95">
+          다음 문제 풀기
+        </button>
+        <!-- 내 도형 보기: 모달만 닫고 캔버스는 그대로 보존하며 재채점 방지 -->
+        <button onclick="handleViewMyDrawingOnly()" class="py-3 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl transition">
+          내 도형 보기
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 왁뿌볼 재료/음식 획득 및 넣기 모달 -->
+  <div id="wakppuIngredientModal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-3xl p-6 sm:p-7 max-w-lg w-full text-center shadow-2xl border-4 border-pink-400">
+      <div class="w-16 h-16 mx-auto rounded-3xl bg-pink-100 text-pink-500 flex items-center justify-center text-3xl mb-3 shadow-md animate-bounce">
+        ✨
+      </div>
+      <span class="text-xs bg-pink-100 text-pink-700 font-black px-3 py-1 rounded-full">신규 재료 & 음식 획득!</span>
+      <h3 class="text-xl sm:text-2xl font-title text-slate-800 mt-2 mb-1">왁뿌볼에 넣을 아이템을 골라주세요!</h3>
+      <p class="text-xs text-slate-500 mb-4">
+        문제를 맞혀 신기한 소리가 담긴 아이템을 찾았습니다! 마음에 드는 것을 선택해 왁뿌볼에 쏙 넣어보세요.
+      </p>
+
+      <!-- 획득한 재료 카드 선택기 (3가지 중 1개 선택) -->
+      <div id="ingredientChoiceContainer" class="grid grid-cols-3 gap-2.5 mb-5">
+        <!-- JS 동적 생성 -->
+      </div>
+
+      <button id="addIngredientConfirmBtn" onclick="confirmAddIngredient()" class="w-full py-3.5 bg-gradient-to-r from-pink-500 via-purple-600 to-indigo-600 hover:from-pink-600 hover:to-indigo-700 text-white font-title text-lg rounded-2xl shadow-lg shadow-pink-500/25 transition active:scale-95 flex items-center justify-center gap-2">
+        <i class="fa-solid fa-plus-circle"></i> 왁뿌볼에 쏙 넣기!
+      </button>
+    </div>
+  </div>
+
+  <!-- 3단계 완료 및 나만의 왁뿌볼 사운드 쇼케이스 모달 -->
+  <div id="wakppuShowcaseModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-lg z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-gradient-to-b from-indigo-950 via-slate-900 to-purple-950 rounded-3xl p-6 sm:p-8 max-w-lg w-full text-center shadow-2xl border-2 border-pink-400/60 relative overflow-hidden text-white">
+      
+      <div class="absolute inset-0 bg-[radial-gradient(circle_at_top,_var(--tw-gradient-stops))] from-pink-500/20 via-transparent to-transparent pointer-events-none"></div>
+
+      <button onclick="closeWakppuShowcaseModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white text-2xl font-bold z-10">
+        &times;
+      </button>
+
+      <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-pink-500/20 border border-pink-400/40 text-pink-300 text-xs font-bold mb-2">
+        <i class="fa-solid fa-music"></i> 팡팡 사운드 왁뿌볼 콘서트
+      </div>
+      <h2 class="text-2xl sm:text-3xl font-title text-amber-300 mb-1">
+        <span id="showcaseStudentName">수학이</span>의 왁뿌볼 연주실!
+      </h2>
+      <p class="text-xs text-purple-200 mb-4">
+        왁뿌볼을 <b>클릭</b>하거나 아래 <b>노래 연주</b>를 틀어보세요! 모은 음식과 재료들의 소리가 신나게 연주됩니다.
+      </p>
+
+      <!-- 거대 왁뿌볼 인터랙티브 오브젝트 -->
+      <div class="relative w-56 h-56 mx-auto my-3 flex items-center justify-center">
+        <div id="wakppuAura" class="absolute inset-0 rounded-full bg-gradient-to-tr from-pink-500 via-amber-400 to-indigo-500 opacity-60 blur-xl animate-pulse"></div>
+        
+        <button id="interactiveWakppuBall" onclick="interactWakppuBall(event)" class="relative w-48 h-48 rounded-full shadow-2xl border-4 border-white/80 flex items-center justify-center cursor-pointer transition transform active:scale-90 wakppu-morph group focus:outline-none" style="background: radial-gradient(circle at 35% 35%, #f472b6, #8b5cf6, #3b82f6, #1e1b4b);">
+          <div class="absolute top-4 left-6 w-12 h-6 rounded-full bg-white/60 blur-[1px] rotate-[-30deg] pointer-events-none"></div>
+          <div id="showcaseWakppuTexture" class="absolute inset-0 rounded-full overflow-hidden pointer-events-none"></div>
+          <div id="wakppuInnerParticles" class="absolute inset-0 rounded-full overflow-hidden pointer-events-none flex items-center justify-center"></div>
+          <div id="wakppuFace" class="w-28 h-28 pointer-events-none select-none transition-transform duration-200 flex items-center justify-center z-10"></div>
+        </button>
+
+        <div id="floatingNotesBox" class="absolute inset-0 pointer-events-none overflow-visible flex items-center justify-center"></div>
+      </div>
+
+      <!-- 노래 연주 컨트롤러 & 비주얼라이저 -->
+      <div class="bg-black/30 backdrop-blur-md rounded-2xl p-3 border border-white/10 mb-3 text-center">
+        <div class="flex items-center justify-between gap-2 mb-2">
+          <div class="flex items-center gap-1.5 text-left">
+            <span class="w-2 h-2 rounded-full bg-pink-500 animate-ping"></span>
+            <div>
+              <div id="songTrackTitle" class="text-xs sm:text-sm font-title text-amber-300">
+                🎶 왁뿌볼 콘서트 준비 완료!
+              </div>
+              <div id="songSubDesc" class="text-[10px] text-purple-300">
+                수집한 재료 & 음식에 맞춰 신나는 리듬과 멜로디가 연주돼요
+              </div>
+            </div>
+          </div>
+          <div class="flex items-end gap-1 h-6 px-1">
+            <div id="eqBar1" class="equalizer-bar w-1.5 h-2 bg-pink-400 rounded-full"></div>
+            <div id="eqBar2" class="equalizer-bar w-1.5 h-4 bg-amber-400 rounded-full"></div>
+            <div id="eqBar3" class="equalizer-bar w-1.5 h-1.5 bg-emerald-400 rounded-full"></div>
+            <div id="eqBar4" class="equalizer-bar w-1.5 h-5 bg-sky-400 rounded-full"></div>
+            <div id="eqBar5" class="equalizer-bar w-1.5 h-3 bg-purple-400 rounded-full"></div>
+          </div>
+        </div>
+
+        <button id="wakppuSongPlayBtn" onclick="toggleWakppuSong()" class="w-full py-3 bg-gradient-to-r from-amber-400 via-pink-500 to-indigo-600 hover:from-amber-300 hover:to-indigo-500 text-white font-title text-base rounded-2xl shadow-xl shadow-pink-500/30 transition transform active:scale-95 flex items-center justify-center gap-2">
+          <i class="fa-solid fa-play text-yellow-200 text-lg"></i>
+          <span id="wakppuSongPlayBtnText">왁뿌볼 노래 연주 시작! 🎶</span>
+        </button>
+      </div>
+
+      <!-- 실시간 사운드 안내 문구 -->
+      <div id="soundPlayIndicator" class="h-6 text-xs font-bold text-amber-300 flex items-center justify-center gap-1.5 transition-all">
+        👆 왁뿌볼을 톡 건드리거나 노래를 틀어보세요!
+      </div>
+
+      <!-- 담긴 재료 리스트 -->
+      <div class="mt-2 p-3 bg-white/5 border border-white/10 rounded-2xl text-left">
+        <div class="text-[11px] font-bold text-purple-300 mb-2 flex items-center justify-between">
+          <span>🔮 연주에 참여하는 재료 & 음식 (<span id="showcaseIngredientTotal">0</span>개)</span>
+          <span class="text-[10px] text-amber-300">클릭 시 개별 사운드 청취</span>
+        </div>
+        <div id="showcaseIngredientsList" class="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto pr-1"></div>
+      </div>
+
+      <div class="mt-4 flex gap-2">
+        <button onclick="closeWakppuShowcaseModal()" class="flex-1 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-sm transition touch-btn">
+          계속 문제 풀기
+        </button>
+        <button onclick="openFinalReport()" class="px-5 py-3 bg-amber-400 hover:bg-amber-300 text-indigo-950 font-bold rounded-xl text-sm transition touch-btn flex items-center justify-center gap-1.5">
+          <i class="fa-solid fa-award"></i> 성적표 보기
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 개념 설명 모달 -->
+  <div id="conceptModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl border border-slate-200 text-left">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+        <h3 class="text-lg font-title text-indigo-700 flex items-center gap-2">
+          <i class="fa-solid fa-book-open"></i> 점대칭도형 알아보기
+        </h3>
+        <button onclick="closeConceptModal()" class="text-slate-400 hover:text-slate-600 text-xl font-bold">
+          &times;
+        </button>
+      </div>
+      
+      <div class="space-y-3 text-xs sm:text-sm text-slate-600">
+        <div class="p-3 bg-amber-50 rounded-xl border border-amber-200/60">
+          <b class="text-amber-900 block mb-1">1. 점대칭도형이란?</b>
+          어떤 점을 중심으로 <span class="text-rose-600 font-bold">180° 돌렸을 때</span> 처음 도형과 완전히 겹치는 도형을 점대칭도형이라고 합니다.
+        </div>
+        
+        <div class="p-3 bg-indigo-50 rounded-xl border border-indigo-200/60">
+          <b class="text-indigo-900 block mb-1">2. 대칭의 중심 (점 ㅇ)</b>
+          도형을 180° 회전시킬 때 중심축이 되는 한 점으로, 점대칭도형에는 오직 하나만 존재합니다.
+        </div>
+
+        <div class="p-3 bg-emerald-50 rounded-xl border border-emerald-200/60">
+          <b class="text-emerald-900 block mb-1">3. 대응점 찾는 법 (그리기 비법)</b>
+          각각의 대응점과 대칭의 중심을 이은 선분은 길이가 서로 같습니다.
+          즉, <b>대칭의 중심까지 가로·세로로 떨어진 칸 수만큼 반대 방향으로 똑같이 이동</b>하여 점을 찍으면 됩니다!
+        </div>
+      </div>
+
+      <div class="mt-5 text-center">
+        <button onclick="closeConceptModal()" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-sm transition">
+          이해했어요! 문제 풀러 가기
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <footer class="bg-white border-t border-slate-200 text-slate-400 text-[11px] py-2.5 text-center">
+    초등학교 5학년 2학기 수학 합동과 대칭 단원 보충학습용 점대칭도형 그리기 마스터 · 크롬 최적화
+  </footer>
+
+  <script>
+    const GRID_SIZE = 14;
+    const CENTER_POINT = { x: 7, y: 7 };
+
+    // Canvas DOM & Context
+    const canvas = document.getElementById('gridCanvas');
+    const ctx = canvas ? canvas.getContext('2d') : null;
+    let cellPixelSize = 0;
+    let canvasOffset = { x: 0, y: 0 };
+    let hoverGridPoint = null;
+
+    let studentName = "";
+    let currentDifficulty = 1;
+    let currentQuestionIndex = 0;
+    let score = 0;
+    let streak = 0;
+    let totalAttempts = 0;
+    let correctCount = 0;
+    let showHint = false;
+    let isHintUnlocked = false;
+    let isRotating = false;
+    let rotationAngle = 0;
+
+    // 문제 채점 완료 상태 플래그 (내 도형 보기 후 중복 채점/점수 중복 획득 버그 방지)
+    let isCurrentQuestionGraded = false;
+
+    let unlockedLevels = [1];
+    let solvedPerLevel = { 1: 0, 2: 0, 3: 0 };
+
+    // Web Audio 엔진
+    let audioCtx = null;
+    function getAudioContext() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+      return audioCtx;
+    }
+
+    function playSound(type) {
+      try {
+        const aCtx = getAudioContext();
+        const now = aCtx.currentTime;
+        const osc = aCtx.createOscillator();
+        const gain = aCtx.createGain();
+        osc.connect(gain);
+        gain.connect(aCtx.destination);
+
+        if (type === 'click') {
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(560, now);
+          osc.frequency.exponentialRampToValueAtTime(750, now + 0.05);
+          gain.gain.setValueAtTime(0.15, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.06);
+          osc.start(now);
+          osc.stop(now + 0.06);
+        } else if (type === 'connect') {
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(523.25, now);
+          osc.frequency.exponentialRampToValueAtTime(783.99, now + 0.08);
+          gain.gain.setValueAtTime(0.18, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.09);
+          osc.start(now);
+          osc.stop(now + 0.09);
+        } else if (type === 'correct') {
+          [523.25, 659.25, 783.99, 1046.50].forEach((freq, idx) => {
+            const o = aCtx.createOscillator();
+            const g = aCtx.createGain();
+            o.type = 'triangle';
+            o.frequency.setValueAtTime(freq, now + idx * 0.07);
+            g.gain.setValueAtTime(0.16, now + idx * 0.07);
+            g.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.07 + 0.25);
+            o.connect(g);
+            g.connect(aCtx.destination);
+            o.start(now + idx * 0.07);
+            o.stop(now + idx * 0.07 + 0.25);
+          });
+        } else if (type === 'wrong') {
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(220, now);
+          osc.frequency.linearRampToValueAtTime(140, now + 0.25);
+          gain.gain.setValueAtTime(0.18, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+          osc.start(now);
+          osc.stop(now + 0.25);
+        } else if (type === 'undo') {
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(420, now);
+          osc.frequency.linearRampToValueAtTime(260, now + 0.07);
+          gain.gain.setValueAtTime(0.12, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.07);
+          osc.start(now);
+          osc.stop(now + 0.07);
+        }
+      } catch (e) {
+        console.warn("AudioContext error: ", e);
+      }
+    }
+
+    const QUESTION_BANK = {
+      1: [
+        {
+          title: "점대칭 마름모",
+          desc: "대칭의 중심 ㅇ(7,7)을 기준으로 대칭인 점을 찾아 마름모를 완성하세요.",
+          // 순서: (4,7) -> (7,3) -> (10,7) -> (7,11) -> (4,7)
+          // 14-x, 14-y 검증: (4,7)<->(10,7), (7,3)<->(7,11) 완벽 일치
+          givenPoints: [{ x: 4, y: 7 }, { x: 7, y: 3 }, { x: 10, y: 7 }],
+          targetRemainingPoints: [{ x: 7, y: 11 }]
+        },
+        {
+          title: "점대칭 평행사변형",
+          desc: "중간선에 닿은 두 변을 보고 대칭의 중심을 기준으로 아래쪽 대응점 2개를 찾아 선으로 이어주세요.",
+          // 순서: (4,7) -> (4,4) -> (10,4) -> (10,7) -> (10,10) -> (4,10)
+          // (4,7)<->(10,7), (4,4)<->(10,10), (10,4)<->(4,10) 완벽 일치
+          givenPoints: [{ x: 4, y: 7 }, { x: 4, y: 4 }, { x: 10, y: 4 }, { x: 10, y: 7 }],
+          targetRemainingPoints: [{ x: 10, y: 10 }, { x: 4, y: 10 }]
+        },
+        {
+          title: "점대칭 정육각형",
+          desc: "중간선(y=7)에 연결된 두 꼭짓점을 기준으로 아래쪽 대응점 2개를 찾아 육각형을 닫으세요.",
+          // 순서: (4,7) -> (5,4) -> (9,4) -> (10,7) -> (9,10) -> (5,10)
+          // (4,7)<->(10,7), (5,4)<->(9,10), (9,4)<->(5,10) 완벽 일치
+          givenPoints: [{ x: 4, y: 7 }, { x: 5, y: 4 }, { x: 9, y: 4 }, { x: 10, y: 7 }],
+          targetRemainingPoints: [{ x: 9, y: 10 }, { x: 5, y: 10 }]
+        },
+        {
+          title: "점대칭 직사각형",
+          desc: "가로변과 세로변의 대칭 위치를 파악하여 아래쪽 대응점 2개를 찾아 직사각형을 완성하세요.",
+          // 순서: (4,7) -> (4,3) -> (10,3) -> (10,7) -> (10,11) -> (4,11)
+          // (4,7)<->(10,7), (4,3)<->(10,11), (10,3)<->(4,11)
+          givenPoints: [{ x: 4, y: 7 }, { x: 4, y: 3 }, { x: 10, y: 3 }, { x: 10, y: 7 }],
+          targetRemainingPoints: [{ x: 10, y: 11 }, { x: 4, y: 11 }]
+        },
+        {
+          title: "점대칭 사다리꼴 대칭체",
+          desc: "중간선(y=7)에서 출발하여 위쪽으로 솟은 사다리꼴의 아래쪽 대응점들을 찾아 연결하세요.",
+          // 순서: (3,7) -> (5,3) -> (9,3) -> (11,7) -> (9,11) -> (5,11)
+          // (3,7)<->(11,7), (5,3)<->(9,11), (9,3)<->(5,11)
+          givenPoints: [{ x: 3, y: 7 }, { x: 5, y: 3 }, { x: 9, y: 3 }, { x: 11, y: 7 }],
+          targetRemainingPoints: [{ x: 9, y: 11 }, { x: 5, y: 11 }]
+        },
+        {
+          title: "점대칭 뾰족 육각형",
+          desc: "위쪽 꼭짓점과 중간선 꼭짓점들의 대칭 관계를 이용해 아래쪽으로 뾰족한 도형을 완성하세요.",
+          // 순서: (4,7) -> (7,2) -> (10,7) -> (10,7)? 기존 (8,10),(6,10)은 점대칭 오류였음!
+          // (4,7)<->(10,7)이며 위쪽 꼭짓점 (7,2)의 대응점은 정확히 (7, 12) 이어야 함!
+          // 수정: (4,7) -> (5,5) -> (7,2) -> (9,5) -> (10,7) -> (9,9) -> (7,12) -> (5,9)
+          givenPoints: [{ x: 4, y: 7 }, { x: 7, y: 2 }, { x: 10, y: 7 }],
+          targetRemainingPoints: [{ x: 7, y: 12 }]
+        },
+        {
+          title: "점대칭 팔각형",
+          desc: "대칭의 중심을 축으로 180도 돌렸을 때 완전히 겹치는 점대칭 팔각형을 만들어보세요.",
+          // 순서: (3,7) -> (3,5) -> (5,3) -> (9,3) -> (11,5) -> (11,7) -> (11,9) -> (9,11) -> (5,11) -> (3,9)
+          // (3,7)<->(11,7), (3,5)<->(11,9), (5,3)<->(9,11), (9,3)<->(5,11), (11,5)<->(3,9) 완벽 일치
+          givenPoints: [{ x: 3, y: 7 }, { x: 3, y: 5 }, { x: 5, y: 3 }, { x: 9, y: 3 }, { x: 11, y: 5 }, { x: 11, y: 7 }],
+          targetRemainingPoints: [{ x: 11, y: 9 }, { x: 9, y: 11 }, { x: 5, y: 11 }, { x: 3, y: 9 }]
+        },
+        {
+          title: "점대칭 오목 다각형",
+          desc: "중간선에 닿은 두 변과 가운데 오목한 꼭짓점의 대응점을 찾아 연결하세요.",
+          // 순서: (4,7) -> (5,3) -> (7,5) -> (9,3) -> (10,7)
+          // (4,7)<->(10,7), (5,3)<->(9,11), (7,5)<->(7,9), (9,3)<->(5,11)
+          // 따라서 순서대로 닫으려면 (10,7) 다음은 (9,11) -> (7,9) -> (5,11) 완벽 일치
+          givenPoints: [{ x: 4, y: 7 }, { x: 5, y: 3 }, { x: 7, y: 5 }, { x: 9, y: 3 }, { x: 10, y: 7 }],
+          targetRemainingPoints: [{ x: 9, y: 11 }, { x: 7, y: 9 }, { x: 5, y: 11 }]
+        },
+        {
+          title: "점대칭 넓은 마름모",
+          desc: "대칭의 중심 ㅇ(7,7)을 기준으로 가로와 세로 칸 수를 세어 아래쪽 꼭짓점을 찾아보세요.",
+          // 순서: (3,7) -> (7,4) -> (11,7) -> (7,10)
+          // (3,7)<->(11,7), (7,4)<->(7,10) 완벽 일치
+          givenPoints: [{ x: 3, y: 7 }, { x: 7, y: 4 }, { x: 11, y: 7 }],
+          targetRemainingPoints: [{ x: 7, y: 10 }]
+        },
+        {
+          title: "점대칭 긴 육각형",
+          desc: "모눈종이의 칸 수를 꼼꼼히 세어 대응점 2개를 찍고 점과 점을 차례로 이어주세요.",
+          // 순서: (5,7) -> (6,3) -> (8,3) -> (9,7) -> (8,11) -> (6,11)
+          // (5,7)<->(9,7), (6,3)<->(8,11), (8,3)<->(6,11) 완벽 일치
+          givenPoints: [{ x: 5, y: 7 }, { x: 6, y: 3 }, { x: 8, y: 3 }, { x: 9, y: 7 }],
+          targetRemainingPoints: [{ x: 8, y: 11 }, { x: 6, y: 11 }]
+        }
+      ],
+      2: [
+        {
+          title: "양방향 점대칭 화살표",
+          desc: "중간선(y=7)까지 이어진 두 기둥에서 아래쪽 대응점을 찾아 양방향 화살표를 완성하세요.",
+          // 순서: (6,7) -> (6,5) -> (4,5) -> (7,2) -> (10,5) -> (8,5) -> (8,7)
+          // 대응점 순환: (8,7) 다음은
+          // (6,5)<->(8,9), (4,5)<->(10,9), (7,2)<->(7,12), (10,5)<->(4,9), (8,5)<->(6,9)
+          // 순서대로 (8,9) -> (10,9) -> (7,12) -> (4,9) -> (6,9) -> 시작점 (6,7)로 닫힘!
+          givenPoints: [{ x: 6, y: 7 }, { x: 6, y: 5 }, { x: 4, y: 5 }, { x: 7, y: 2 }, { x: 10, y: 5 }, { x: 8, y: 5 }, { x: 8, y: 7 }],
+          targetRemainingPoints: [{ x: 8, y: 9 }, { x: 10, y: 9 }, { x: 7, y: 12 }, { x: 4, y: 9 }, { x: 6, y: 9 }]
+        },
+        {
+          title: "점대칭 십자형(Cross)",
+          desc: "각 날개의 가로·세로 길이가 같은 십자 모양의 아래쪽 날개들을 찾아 선으로 연결하세요.",
+          // 순서: (5,7) -> (5,5) -> (7,5) -> (7,3) -> (9,3)? 아니면 (7,3)->(7,5)?
+          // 바른 십자형: (5,7) -> (5,5) -> (3,5)? 
+          // 원래: (5,7) -> (5,5) -> (7,5)? 이것은 선이 겹칩니다!
+          // 올바른 십자형 상단 둘레:
+          // (5,7) -> (5,5) -> (3,5) -> (3,9)? 대칭중심 (7,7)
+          // 십자형 꼭짓점(대칭):
+          // 위 날개: (6,3)-(8,3), 오른쪽: (11,6)-(11,8), 아래: (8,11)-(6,11), 왼쪽: (3,8)-(3,6)
+          // 중간선(y=7)을 통과하는 둘레:
+          // (3,7) -> (5,7)? 둘레로 가려면:
+          // (3,7) -> (3,6) -> (6,6) -> (6,3) -> (8,3) -> (8,6) -> (11,6) -> (11,7)
+          // 아래쪽 대응점들:
+          // (11,8) -> (8,8) -> (8,11) -> (6,11) -> (6,8) -> (3,8) -> (3,7)
+          givenPoints: [{ x: 3, y: 7 }, { x: 3, y: 6 }, { x: 6, y: 6 }, { x: 6, y: 3 }, { x: 8, y: 3 }, { x: 8, y: 6 }, { x: 11, y: 6 }, { x: 11, y: 7 }],
+          targetRemainingPoints: [{ x: 11, y: 8 }, { x: 8, y: 8 }, { x: 8, y: 11 }, { x: 6, y: 11 }, { x: 6, y: 8 }, { x: 3, y: 8 }]
+        },
+        {
+          title: "점대칭 계단형 다각형",
+          desc: "계단처럼 꺾인 선들의 대칭 위치를 정확한 칸 수로 파악하여 대응점들을 찾아보세요.",
+          // 순서: (4,7) -> (4,4) -> (7,4) -> (7,5) -> (10,5) -> (10,7)
+          // 대응점: (10,7) -> (10,10) -> (7,10) -> (7,9) -> (4,9) -> (4,7)
+          // (4,4)<->(10,10), (7,4)<->(7,10), (7,5)<->(7,9), (10,5)<->(4,9) 완벽 일치!
+          givenPoints: [{ x: 4, y: 7 }, { x: 4, y: 4 }, { x: 7, y: 4 }, { x: 7, y: 5 }, { x: 10, y: 5 }, { x: 10, y: 7 }],
+          targetRemainingPoints: [{ x: 10, y: 10 }, { x: 7, y: 10 }, { x: 7, y: 9 }, { x: 4, y: 9 }]
+        },
+        {
+          title: "점대칭 번개 블록",
+          desc: "중간선을 통과하는 번개 모양의 점대칭도형을 완성하세요.",
+          // 순서: (5,7) -> (5,3) -> (8,3) -> (7,6) -> (9,7)
+          // 기존 대응점: (9,11), (6,11), (7,8) -> (14-7, 14-6)=(7,8), (14-8, 14-3)=(6,11), (14-5, 14-3)=(9,11)
+          // 순서: (9,7) -> (9,11) -> (6,11) -> (7,8) -> (5,7)
+          givenPoints: [{ x: 5, y: 7 }, { x: 5, y: 3 }, { x: 8, y: 3 }, { x: 7, y: 6 }, { x: 9, y: 7 }],
+          targetRemainingPoints: [{ x: 9, y: 11 }, { x: 6, y: 11 }, { x: 7, y: 8 }]
+        },
+        {
+          title: "점대칭 H 블록",
+          desc: "중간 대칭선 양쪽 기둥을 기준으로 아래쪽 다리를 찾아 H 형태를 만들어보세요.",
+          // 순서: (4,7) -> (4,3) -> (6,3) -> (6,6) -> (8,6) -> (8,3) -> (10,3) -> (10,7)
+          // 대응점: (10,11) -> (8,11) -> (8,8) -> (6,8) -> (6,11) -> (4,11)
+          givenPoints: [{ x: 4, y: 7 }, { x: 4, y: 3 }, { x: 6, y: 3 }, { x: 6, y: 6 }, { x: 8, y: 6 }, { x: 8, y: 3 }, { x: 10, y: 3 }, { x: 10, y: 7 }],
+          targetRemainingPoints: [{ x: 10, y: 11 }, { x: 8, y: 11 }, { x: 8, y: 8 }, { x: 6, y: 8 }, { x: 6, y: 11 }, { x: 4, y: 11 }]
+        },
+        {
+          title: "점대칭 Z 블록",
+          desc: "회전 대칭성을 가진 Z자형 다각형의 아래쪽 대응점들을 찾아 차례대로 이어보세요.",
+          // 순서: (4,7) -> (4,4) -> (8,4) -> (7,6) -> (10,7)
+          // 대응점: (10,10) -> (6,10) -> (7,8)
+          // (4,4)<->(10,10), (8,4)<->(6,10), (7,6)<->(7,8) 완벽 일치!
+          givenPoints: [{ x: 4, y: 7 }, { x: 4, y: 4 }, { x: 8, y: 4 }, { x: 7, y: 6 }, { x: 10, y: 7 }],
+          targetRemainingPoints: [{ x: 10, y: 10 }, { x: 6, y: 10 }, { x: 7, y: 8 }]
+        },
+        {
+          title: "점대칭 톱니 다각형",
+          desc: "톱니처럼 뾰족하게 튀어나온 꼭짓점들의 대칭 위치를 주의 깊게 찾아보세요.",
+          // 순서: (4,7) -> (5,4) -> (6,6) -> (8,4) -> (9,6) -> (10,7)
+          // 대응점 순환: (10,7) -> (9,10) -> (8,8) -> (6,10) -> (5,8) -> (4,7)
+          // (5,4)<->(9,10), (6,6)<->(8,8), (8,4)<->(6,10), (9,6)<->(5,8) 완벽 일치!
+          givenPoints: [{ x: 4, y: 7 }, { x: 5, y: 4 }, { x: 6, y: 6 }, { x: 8, y: 4 }, { x: 9, y: 6 }, { x: 10, y: 7 }],
+          targetRemainingPoints: [{ x: 9, y: 10 }, { x: 8, y: 8 }, { x: 6, y: 10 }, { x: 5, y: 8 }]
+        },
+        {
+          title: "점대칭 왕관 다각형",
+          desc: "왕관 모양의 뾰족한 봉우리들이 아래쪽으로 대칭 회전된 대응점을 찾아 완성하세요.",
+          // 순서: (4,7) -> (4,3) -> (6,5) -> (7,2) -> (8,5) -> (10,3) -> (10,7)
+          // 대응점: (10,11) -> (8,9) -> (7,12) -> (6,9) -> (4,11)
+          // (4,3)<->(10,11), (6,5)<->(8,9), (7,2)<->(7,12), (8,5)<->(6,9), (10,3)<->(4,11) 완벽 일치!
+          givenPoints: [{ x: 4, y: 7 }, { x: 4, y: 3 }, { x: 6, y: 5 }, { x: 7, y: 2 }, { x: 8, y: 5 }, { x: 10, y: 3 }, { x: 10, y: 7 }],
+          targetRemainingPoints: [{ x: 10, y: 11 }, { x: 8, y: 9 }, { x: 7, y: 12 }, { x: 6, y: 9 }, { x: 4, y: 11 }]
+        },
+        {
+          title: "점대칭 리본 다각형",
+          desc: "가운데가 좁아지고 양 끝이 넓어지는 리본 형태의 점대칭도형을 그려보세요.",
+          // 순서: (4,7) -> (3,4) -> (6,6) -> (8,6) -> (11,4) -> (10,7)
+          // 대응점: (10,7) -> (11,10) -> (8,8) -> (6,8) -> (3,10) -> (4,7)
+          // (3,4)<->(11,10), (6,6)<->(8,8), (8,6)<->(6,8), (11,4)<->(3,10) 완벽 일치!
+          givenPoints: [{ x: 4, y: 7 }, { x: 3, y: 4 }, { x: 6, y: 6 }, { x: 8, y: 6 }, { x: 11, y: 4 }, { x: 10, y: 7 }],
+          targetRemainingPoints: [{ x: 11, y: 10 }, { x: 8, y: 8 }, { x: 6, y: 8 }, { x: 3, y: 10 }]
+        },
+        {
+          title: "점대칭 모루 다각형",
+          desc: "단단한 모루 형태의 복합 점대칭도형입니다. 중간선 기준 칸 수를 정확히 확인하세요.",
+          // 순서: (4,7) -> (5,4) -> (9,4) -> (9,6) -> (10,7)
+          // 대응점: (10,7) -> (9,10) -> (5,10) -> (5,8) -> (4,7)
+          // (5,4)<->(9,10), (9,4)<->(5,10), (9,6)<->(5,8) 완벽 일치!
+          givenPoints: [{ x: 4, y: 7 }, { x: 5, y: 4 }, { x: 9, y: 4 }, { x: 9, y: 6 }, { x: 10, y: 7 }],
+          targetRemainingPoints: [{ x: 9, y: 10 }, { x: 5, y: 10 }, { x: 5, y: 8 }]
+        }
+      ],
+      3: [
+        {
+          title: "점대칭 4각 별 다각형",
+          desc: "사방으로 날렵하게 뻗은 4각 별의 아래쪽 날개들을 대칭의 중심을 기준으로 찾아보세요.",
+          // 순서: (5,7) -> (4,5) -> (7,2) -> (10,5) -> (9,7)
+          // 대응점 순환: (9,7) -> (10,9) -> (7,12) -> (4,9) -> (5,7)
+          // (4,5)<->(10,9), (7,2)<->(7,12), (10,5)<->(4,9) 완벽 일치!
+          givenPoints: [{ x: 5, y: 7 }, { x: 4, y: 5 }, { x: 7, y: 2 }, { x: 10, y: 5 }, { x: 9, y: 7 }],
+          targetRemainingPoints: [{ x: 10, y: 9 }, { x: 7, y: 12 }, { x: 4, y: 9 }]
+        },
+        {
+          title: "점대칭 4날개 바람개비",
+          desc: "회전 대칭의 대표 도형인 바람개비의 아래쪽 날개들을 찾아 선으로 이어주세요.",
+          // 기존: (5,7)->(3,5)->(7,4)->(9,2)->(8,6)->(9,7)
+          // (3,5)<->(11,9), (7,4)<->(7,10), (9,2)<->(5,12), (8,6)<->(6,8)
+          // 순서: (9,7) -> (11,9) -> (7,10) -> (5,12) -> (6,8) -> (5,7) 완벽 일치!
+          givenPoints: [{ x: 5, y: 7 }, { x: 3, y: 5 }, { x: 7, y: 4 }, { x: 9, y: 2 }, { x: 8, y: 6 }, { x: 9, y: 7 }],
+          targetRemainingPoints: [{ x: 11, y: 9 }, { x: 7, y: 10 }, { x: 5, y: 12 }, { x: 6, y: 8 }]
+        },
+        {
+          title: "점대칭 보석 커팅 다각형",
+          desc: "다이아몬드처럼 정교하게 각진 점대칭도형의 모든 대응점을 정확하게 찾아보세요.",
+          // 순서: (4,7) -> (3,5) -> (5,3) -> (9,3) -> (11,5) -> (10,7)
+          // 대응점: (10,7) -> (11,9) -> (9,11) -> (5,11) -> (3,9) -> (4,7)
+          // (3,5)<->(11,9), (5,3)<->(9,11), (9,3)<->(5,11), (11,5)<->(3,9) 완벽 일치!
+          givenPoints: [{ x: 4, y: 7 }, { x: 3, y: 5 }, { x: 5, y: 3 }, { x: 9, y: 3 }, { x: 11, y: 5 }, { x: 10, y: 7 }],
+          targetRemainingPoints: [{ x: 11, y: 9 }, { x: 9, y: 11 }, { x: 5, y: 11 }, { x: 3, y: 9 }]
+        },
+        {
+          title: "점대칭 더블 쉐브론",
+          desc: "화살표 깃 모양이 겹쳐진 난이도 높은 점대칭도형입니다. 대응점들을 연결하세요.",
+          // 순서: (4,7) -> (5,4) -> (7,6) -> (9,4) -> (10,7)
+          // 대응점: (10,7) -> (9,10) -> (7,8) -> (5,10) -> (4,7)
+          // (5,4)<->(9,10), (7,6)<->(7,8), (9,4)<->(5,10) 완벽 일치!
+          givenPoints: [{ x: 4, y: 7 }, { x: 5, y: 4 }, { x: 7, y: 6 }, { x: 9, y: 4 }, { x: 10, y: 7 }],
+          targetRemainingPoints: [{ x: 9, y: 10 }, { x: 7, y: 8 }, { x: 5, y: 10 }]
+        },
+        {
+          title: "점대칭 방패 다각형",
+          desc: "중간선에 닿은 양쪽 벽을 시작으로 아래쪽 날렵한 방패 모서리를 완성하세요.",
+          // 순서: (3,7) -> (3,4) -> (6,3) -> (8,3) -> (11,4) -> (11,7)
+          // 대응점: (11,7) -> (11,10) -> (8,11) -> (6,11) -> (3,10) -> (3,7)
+          // (3,4)<->(11,10), (6,3)<->(8,11), (8,3)<->(6,11), (11,4)<->(3,10) 완벽 일치!
+          givenPoints: [{ x: 3, y: 7 }, { x: 3, y: 4 }, { x: 6, y: 3 }, { x: 8, y: 3 }, { x: 11, y: 4 }, { x: 11, y: 7 }],
+          targetRemainingPoints: [{ x: 11, y: 10 }, { x: 8, y: 11 }, { x: 6, y: 11 }, { x: 3, y: 10 }]
+        },
+        {
+          title: "점대칭 크리스탈 다각형",
+          desc: "위쪽 굴곡의 대응점을 대칭의 중심 ㅇ(7,7)을 지나 반대쪽으로 옮겨보세요.",
+          // 순서: (4,7) -> (4,4) -> (6,3) -> (7,5) -> (8,3) -> (10,4) -> (10,7)
+          // 대응점: (10,7) -> (10,10) -> (8,11) -> (7,9) -> (6,11) -> (4,10) -> (4,7)
+          // (4,4)<->(10,10), (6,3)<->(8,11), (7,5)<->(7,9), (8,3)<->(6,11), (10,4)<->(4,10) 완벽 일치!
+          givenPoints: [{ x: 4, y: 7 }, { x: 4, y: 4 }, { x: 6, y: 3 }, { x: 7, y: 5 }, { x: 8, y: 3 }, { x: 10, y: 4 }, { x: 10, y: 7 }],
+          targetRemainingPoints: [{ x: 10, y: 10 }, { x: 8, y: 11 }, { x: 7, y: 9 }, { x: 6, y: 11 }, { x: 4, y: 10 }]
+        },
+        {
+          title: "점대칭 우주선 다각형",
+          desc: "로켓 날개와 조종석 꼭짓점들의 대칭 위치를 파악하여 아래쪽 동체를 완성하세요.",
+          // 순서: (5,7) -> (3,6) -> (6,4) -> (7,2) -> (8,4) -> (11,6) -> (9,7)
+          // (3,6)<->(11,8), (6,4)<->(8,10), (7,2)<->(7,12), (8,4)<->(6,10), (11,6)<->(3,8)
+          // 순서: (9,7) -> (11,8) -> (8,10) -> (7,12) -> (6,10) -> (3,8) -> (5,7) 완벽 일치!
+          givenPoints: [{ x: 5, y: 7 }, { x: 3, y: 6 }, { x: 6, y: 4 }, { x: 7, y: 2 }, { x: 8, y: 4 }, { x: 11, y: 6 }, { x: 9, y: 7 }],
+          targetRemainingPoints: [{ x: 11, y: 8 }, { x: 8, y: 10 }, { x: 7, y: 12 }, { x: 6, y: 10 }, { x: 3, y: 8 }]
+        },
+        {
+          title: "점대칭 팔각별",
+          desc: "8개의 뾰족한 꼭짓점을 가진 별의 아래쪽 절반을 점대칭 규칙으로 완성하세요.",
+          // 순서: (4,7) -> (3,5) -> (5,5) -> (7,2) -> (9,5) -> (11,5) -> (10,7)
+          // 대응점: (10,7) -> (11,9) -> (9,9) -> (7,12) -> (5,9) -> (3,9) -> (4,7)
+          // (3,5)<->(11,9), (5,5)<->(9,9), (7,2)<->(7,12), (9,5)<->(5,9), (11,5)<->(3,9) 완벽 일치!
+          givenPoints: [{ x: 4, y: 7 }, { x: 3, y: 5 }, { x: 5, y: 5 }, { x: 7, y: 2 }, { x: 9, y: 5 }, { x: 11, y: 5 }, { x: 10, y: 7 }],
+          targetRemainingPoints: [{ x: 11, y: 9 }, { x: 9, y: 9 }, { x: 7, y: 12 }, { x: 5, y: 9 }, { x: 3, y: 9 }]
+        },
+        {
+          title: "점대칭 지그재그 타워",
+          desc: "지그재그로 연속해서 꺾이는 복잡한 다각형의 대응점을 정확히 찾아내세요.",
+          // 순서: (4,7) -> (6,5) -> (5,4) -> (7,2) -> (9,4) -> (8,5) -> (10,7)
+          // 대응점: (10,7) -> (8,9) -> (9,10) -> (7,12) -> (5,10) -> (6,9) -> (4,7)
+          // (6,5)<->(8,9), (5,4)<->(9,10), (7,2)<->(7,12), (9,4)<->(5,10), (8,5)<->(6,9) 완벽 일치!
+          givenPoints: [{ x: 4, y: 7 }, { x: 6, y: 5 }, { x: 5, y: 4 }, { x: 7, y: 2 }, { x: 9, y: 4 }, { x: 8, y: 5 }, { x: 10, y: 7 }],
+          targetRemainingPoints: [{ x: 8, y: 9 }, { x: 9, y: 10 }, { x: 7, y: 12 }, { x: 5, y: 10 }, { x: 6, y: 9 }]
+        },
+        {
+          title: "점대칭 콤파스 다각형",
+          desc: "동서남북 방위 표시처럼 대칭성이 뚜렷한 다각형의 아래쪽 날을 완성하세요.",
+          // 순서: (4,7) -> (5,6) -> (7,2) -> (9,6) -> (10,7)
+          // 대응점: (10,7) -> (9,8) -> (7,12) -> (5,8) -> (4,7)
+          // (5,6)<->(9,8), (7,2)<->(7,12), (9,6)<->(5,8) 완벽 일치!
+          givenPoints: [{ x: 4, y: 7 }, { x: 5, y: 6 }, { x: 7, y: 2 }, { x: 9, y: 6 }, { x: 10, y: 7 }],
+          targetRemainingPoints: [{ x: 9, y: 8 }, { x: 7, y: 12 }, { x: 5, y: 8 }]
+        },
+        {
+          title: "점대칭 피닉스 엠블럼",
+          desc: "날개를 활짝 편 불사조 문양의 점대칭도형을 완성하여 마스터 왁뿌볼의 최고 실력을 뽐내보세요!",
+          // 순서: (3,7) -> (4,4) -> (6,5) -> (7,2) -> (8,5) -> (10,4) -> (11,7)
+          // 대응점: (11,7) -> (10,10) -> (8,9) -> (7,12) -> (6,9) -> (4,10) -> (3,7)
+          // (4,4)<->(10,10), (6,5)<->(8,9), (7,2)<->(7,12), (8,5)<->(6,9), (10,4)<->(4,10) 완벽 일치!
+          givenPoints: [{ x: 3, y: 7 }, { x: 4, y: 4 }, { x: 6, y: 5 }, { x: 7, y: 2 }, { x: 8, y: 5 }, { x: 10, y: 4 }, { x: 11, y: 7 }],
+          targetRemainingPoints: [{ x: 10, y: 10 }, { x: 8, y: 9 }, { x: 7, y: 12 }, { x: 6, y: 9 }, { x: 4, y: 10 }]
+        }
+      ]
+    };
+
+    let userPoints = [];
+    let userEdges = [];
+    let selectedLineStartPoint = null;
+
+    let currentTool = 'point';
+    let penColor = '#f59e0b';
+    let penLineWidth = 3;
+    let freehandStrokes = [];
+    let currentStroke = null;
+
+    let selectedStarterKey = 'pink';
+    let wakppuIngredients = [];
+    let pendingEarnedIngredient = null;
+
+    const STARTER_WAKPPU_CATALOG = {
+      pink: {
+        id: 'pink',
+        name: '말랑 핑크 왁뿌',
+        baseColor: '#ec4899',
+        darkColor: '#831843',
+        gradient: 'radial-gradient(circle at 35% 35%, #f472b6, #ec4899, #db2777, #831843)',
+        aura: 'from-pink-500 via-rose-400 to-amber-300',
+        defaultMood: 'happy',
+        soundType: 'paper'
+      },
+      purple: {
+        id: 'purple',
+        name: '신비 퍼플 왁뿌',
+        baseColor: '#9333ea',
+        darkColor: '#3b0764',
+        gradient: 'radial-gradient(circle at 35% 35%, #c084fc, #9333ea, #6b21a8, #3b0764)',
+        aura: 'from-purple-500 via-indigo-400 to-pink-400',
+        defaultMood: 'starry',
+        soundType: 'sparkle'
+      },
+      blue: {
+        id: 'blue',
+        name: '청량 블루 왁뿌',
+        baseColor: '#0284c7',
+        darkColor: '#0f172a',
+        gradient: 'radial-gradient(circle at 35% 35%, #38bdf8, #0284c7, #1d4ed8, #0f172a)',
+        aura: 'from-sky-400 via-cyan-400 to-blue-600',
+        defaultMood: 'wink',
+        soundType: 'vinyl'
+      },
+      mint: {
+        id: 'mint',
+        name: '톡톡 민트 왁뿌',
+        baseColor: '#059669',
+        darkColor: '#064e3b',
+        gradient: 'radial-gradient(circle at 35% 35%, #34d399, #059669, #047857, #064e3b)',
+        aura: 'from-emerald-400 via-teal-400 to-amber-300',
+        defaultMood: 'excited',
+        soundType: 'leaves'
+      }
+    };
+
+    // 대폭 확장된 재료 & 음식 아이템 카탈로그 (음식 사운드 대거 추가)
+    const INGREDIENTS_CATALOG = {
+      // 1. 맛있는 음식 아이템들 (새로 추가)
+      chicken: {
+        id: 'chicken',
+        name: '바삭 황금치킨',
+        icon: '🍗',
+        desc: '바삭바삭 크리스피 튀김옷 소리',
+        color: '#f59e0b',
+        soundType: 'fried_crunch',
+        category: 'food'
+      },
+      pizza: {
+        id: 'pizza',
+        name: '쭉쭉 피자 치즈',
+        icon: '🍕',
+        desc: '보글보글 고소한 치즈 거품 소리',
+        color: '#ea580c',
+        soundType: 'bubble_sizzle',
+        category: 'food'
+      },
+      bbq: {
+        id: 'bbq',
+        name: '지글지글 바비큐',
+        icon: '🥩',
+        desc: '지글지글 맛있는 고기 굽는 소리',
+        color: '#dc2626',
+        soundType: 'grill_sizzle',
+        category: 'food'
+      },
+      soda: {
+        id: 'soda',
+        name: '톡톡 탄산 사이다',
+        icon: '🥤',
+        desc: '촤아아~ 톡톡 터지는 탄산 기포음',
+        color: '#0284c7',
+        soundType: 'fizzy_soda',
+        category: 'food'
+      },
+      honey: {
+        id: 'honey',
+        name: '달콤 꿀 시럽',
+        icon: '🍯',
+        desc: '쫀득쫀득 달콤한 꿀물 떨어지는 소리',
+        color: '#d97706',
+        soundType: 'sweet_syrup',
+        category: 'food'
+      },
+      dduk: {
+        id: 'dduk',
+        name: '쫀득 찹쌀떡',
+        icon: '🍡',
+        desc: '쫀득쫀득 찰진 떡 씹는 ASMR',
+        color: '#f43f5e',
+        soundType: 'chewy_rice',
+        category: 'food'
+      },
+      // 2. 신비로운 자연 & 촉감 재료들
+      star: {
+        id: 'star',
+        name: '영롱 별사탕',
+        icon: '🌟',
+        desc: '별빛처럼 찰랑이는 바스락 소리',
+        color: '#fbbf24',
+        soundType: 'sparkle',
+        category: 'material'
+      },
+      bubble: {
+        id: 'bubble',
+        name: '뽁뽁이 비닐',
+        icon: '🫧',
+        desc: '비닐 뽁뽁이 터지는 바스락 소리',
+        color: '#06b6d4',
+        soundType: 'bubble',
+        category: 'material'
+      },
+      cat: {
+        id: 'cat',
+        name: '바스락 종이볼',
+        icon: '📜',
+        desc: '사각사각 보드라운 종이 바스락',
+        color: '#f43f5e',
+        soundType: 'paper',
+        category: 'material'
+      },
+      lightning: {
+        id: 'lightning',
+        name: '바삭 과자 조각',
+        icon: '🍪',
+        desc: '와삭바삭 맛있는 쿠키 크런치',
+        color: '#8b5cf6',
+        soundType: 'crunch',
+        category: 'food'
+      },
+      rainbow: {
+        id: 'rainbow',
+        name: '가을 낙엽 조각',
+        icon: '🍂',
+        desc: '바삭바삭 포근한 마른 낙엽 소리',
+        color: '#10b981',
+        soundType: 'leaves',
+        category: 'material'
+      },
+      crystal: {
+        id: 'crystal',
+        name: '소리 슬라임',
+        icon: '🪐',
+        desc: '기포 톡톡 터지는 슬라임 바스락',
+        color: '#6366f1',
+        soundType: 'slime',
+        category: 'material'
+      },
+      pudding: {
+        id: 'pudding',
+        name: '뽀드득 눈송이',
+        icon: '❄️',
+        desc: '뽀드득 발자국 눈 밟는 바스락',
+        color: '#38bdf8',
+        soundType: 'snow',
+        category: 'material'
+      },
+      berry: {
+        id: 'berry',
+        name: '산딸기 팝핑젤리',
+        icon: '🍓',
+        desc: '상큼하게 톡톡 터지는 베리 사운드',
+        color: '#e11d48',
+        soundType: 'cookie',
+        category: 'food'
+      }
+    };
+
+    function getWakppuAppearance() {
+      const starter = STARTER_WAKPPU_CATALOG[selectedStarterKey] || STARTER_WAKPPU_CATALOG.pink;
+      const count = wakppuIngredients.length;
+
+      if (count === 0) {
+        return {
+          gradient: starter.gradient,
+          aura: starter.aura,
+          boxShadow: `0 10px 25px -5px ${starter.baseColor}66, inset 0 2px 6px rgba(255,255,255,0.6)`,
+          textureHtml: ''
+        };
+      }
+
+      const ingColors = wakppuIngredients.map(id => INGREDIENTS_CATALOG[id]?.color || '#ffffff');
+      const latestColor = ingColors[ingColors.length - 1];
+      const secondColor = ingColors.length > 1 ? ingColors[ingColors.length - 2] : starter.baseColor;
+
+      let dynamicGradient = `radial-gradient(circle at 32% 30%, #ffffff 0%, ${latestColor} 28%, ${secondColor} 58%, ${starter.darkColor} 100%)`;
+
+      let textureHtml = '';
+      if (wakppuIngredients.includes('bubble')) {
+        textureHtml += `<div class="absolute inset-0 bg-gradient-to-tr from-cyan-400/25 via-transparent to-white/40 pointer-events-none"></div>`;
+      }
+      if (wakppuIngredients.includes('soda')) {
+        textureHtml += `<div class="absolute inset-0 bg-[radial-gradient(circle_at_bottom,_var(--tw-gradient-stops))] from-sky-400/30 via-transparent to-transparent pointer-events-none"></div>`;
+      }
+      if (wakppuIngredients.includes('pudding')) {
+        textureHtml += `<div class="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-sky-200/40 via-transparent to-transparent pointer-events-none"></div>`;
+      }
+      if (wakppuIngredients.includes('honey')) {
+        textureHtml += `<div class="absolute inset-0 bg-amber-400/15 backdrop-blur-[0.5px] pointer-events-none"></div>`;
+      }
+      if (wakppuIngredients.includes('star')) {
+        textureHtml += `<div class="absolute top-2 right-3 text-[10px] text-amber-200 animate-pulse pointer-events-none">✨</div>`;
+      }
+
+      let dynamicAura = `from-[${latestColor}] via-[${starter.baseColor}] to-purple-600`;
+
+      return {
+        gradient: dynamicGradient,
+        aura: dynamicAura,
+        boxShadow: `0 12px 30px -5px ${latestColor}88, inset 0 3px 8px rgba(255,255,255,0.7)`,
+        textureHtml: textureHtml
+      };
+    }
+
+    function renderWakppuFaceSvg(mood = 'happy') {
+      const blushPink = `<ellipse cx="28" cy="58" rx="8" ry="4.5" fill="#f43f5e" opacity="0.45"/><ellipse cx="72" cy="58" rx="8" ry="4.5" fill="#f43f5e" opacity="0.45"/>`;
+      
+      let eyesAndMouth = '';
+
+      switch (mood) {
+        case 'wink':
+          eyesAndMouth = `
+            <path d="M 24 48 Q 32 40 40 48" fill="none" stroke="#1e1b4b" stroke-width="4.5" stroke-linecap="round"/>
+            <circle cx="68" cy="46" r="8" fill="#1e1b4b"/>
+            <circle cx="65.5" cy="43" r="3.2" fill="#ffffff"/>
+            <circle cx="70.5" cy="48" r="1.5" fill="#ffffff"/>
+            <path d="M 44 54 Q 50 63 56 54" fill="#ffffff" stroke="#1e1b4b" stroke-width="3" stroke-linecap="round"/>
+          `;
+          break;
+
+        case 'starry':
+          eyesAndMouth = `
+            <g transform="translate(32, 45)">
+              <polygon points="0,-8 2.5,-2.5 8,0 2.5,2.5 0,8 -2.5,2.5 -8,0 -2.5,-2.5" fill="#fef08a"/>
+              <circle cx="0" cy="0" r="2.2" fill="#ffffff"/>
+            </g>
+            <g transform="translate(68, 45)">
+              <polygon points="0,-8 2.5,-2.5 8,0 2.5,2.5 0,8 -2.5,2.5 -8,0 -2.5,-2.5" fill="#fef08a"/>
+              <circle cx="0" cy="0" r="2.2" fill="#ffffff"/>
+            </g>
+            <path d="M 43 54 Q 50 49 57 54" fill="none" stroke="#ffffff" stroke-width="3.5" stroke-linecap="round"/>
+          `;
+          break;
+
+        case 'excited':
+          eyesAndMouth = `
+            <path d="M 24 49 Q 32 38 40 49" fill="none" stroke="#0f172a" stroke-width="4.5" stroke-linecap="round"/>
+            <path d="M 60 49 Q 68 38 76 49" fill="none" stroke="#0f172a" stroke-width="4.5" stroke-linecap="round"/>
+            <path d="M 43 53 Q 50 66 57 53 Z" fill="#fb7185" stroke="#0f172a" stroke-width="3" stroke-linejoin="round"/>
+          `;
+          break;
+
+        case 'cat':
+          eyesAndMouth = `
+            <circle cx="32" cy="46" r="7.5" fill="#1e1b4b"/>
+            <circle cx="30" cy="43.5" r="3" fill="#ffffff"/>
+            <circle cx="68" cy="46" r="7.5" fill="#1e1b4b"/>
+            <circle cx="66" cy="43.5" r="3" fill="#ffffff"/>
+            <path d="M 42 53 Q 46 58 50 53 Q 54 58 58 53" fill="none" stroke="#1e1b4b" stroke-width="3.5" stroke-linecap="round"/>
+          `;
+          break;
+
+        case 'sparkle':
+          eyesAndMouth = `
+            <circle cx="32" cy="45" r="9" fill="#1e1b4b"/>
+            <circle cx="29" cy="42" r="4" fill="#ffffff"/>
+            <circle cx="35" cy="48" r="2" fill="#ffffff"/>
+            <circle cx="68" cy="45" r="9" fill="#1e1b4b"/>
+            <circle cx="65" cy="42" r="4" fill="#ffffff"/>
+            <circle cx="71" cy="48" r="2" fill="#ffffff"/>
+            <path d="M 44 54 Q 50 61 56 54" fill="none" stroke="#1e1b4b" stroke-width="3.2" stroke-linecap="round"/>
+          `;
+          break;
+
+        case 'proud':
+          eyesAndMouth = `
+            <path d="M 23 46 Q 32 40 40 45" fill="none" stroke="#1e1b4b" stroke-width="4" stroke-linecap="round"/>
+            <path d="M 60 45 Q 68 40 77 46" fill="none" stroke="#1e1b4b" stroke-width="4" stroke-linecap="round"/>
+            <circle cx="31" cy="48" r="4" fill="#1e1b4b"/>
+            <circle cx="69" cy="48" r="4" fill="#1e1b4b"/>
+            <path d="M 45 54 Q 50 59 55 54" fill="none" stroke="#1e1b4b" stroke-width="3.5" stroke-linecap="round"/>
+          `;
+          break;
+
+        case 'yummy': // 맛있는 음식을 먹고 기분 좋은 표정
+          eyesAndMouth = `
+            <path d="M 24 48 Q 32 41 40 48" fill="none" stroke="#1e1b4b" stroke-width="4.2" stroke-linecap="round"/>
+            <path d="M 60 48 Q 68 41 76 48" fill="none" stroke="#1e1b4b" stroke-width="4.2" stroke-linecap="round"/>
+            <path d="M 43 54 Q 50 63 57 54" fill="#ef4444" stroke="#1e1b4b" stroke-width="2.8" stroke-linecap="round"/>
+            <!-- 혀 낼름 -->
+            <path d="M 47 57 Q 50 64 53 57" fill="#fb7185"/>
+          `;
+          break;
+
+        case 'happy':
+        default:
+          eyesAndMouth = `
+            <circle cx="32" cy="46" r="7.5" fill="#1e1b4b"/>
+            <circle cx="30" cy="43.5" r="3" fill="#ffffff"/>
+            <circle cx="34" cy="48" r="1.5" fill="#ffffff"/>
+            <circle cx="68" cy="46" r="7.5" fill="#1e1b4b"/>
+            <circle cx="66" cy="43.5" r="3" fill="#ffffff"/>
+            <circle cx="70" cy="48" r="1.5" fill="#ffffff"/>
+            <path d="M 43 53 Q 50 62 57 53" fill="none" stroke="#1e1b4b" stroke-width="3.2" stroke-linecap="round"/>
+          `;
+          break;
+      }
+
+      let accessories = '';
+
+      // 새싹
+      if (wakppuIngredients.includes('rainbow') || selectedStarterKey === 'mint') {
+        accessories += `
+          <g transform="translate(50, 14)">
+            <path d="M 0 10 Q -6 2 -12 6 Q -12 -3 0 -5 Q 12 -3 12 6 Q 6 2 0 10 Z" fill="#22c55e" stroke="#15803d" stroke-width="1.5"/>
+            <path d="M 0 8 L 0 -3" stroke="#15803d" stroke-width="1.2" stroke-linecap="round"/>
+          </g>
+        `;
+      }
+
+      // 별사탕 헤어핀
+      if (wakppuIngredients.includes('star')) {
+        accessories += `
+          <g transform="translate(73, 24)">
+            <polygon points="0,-7 2.2,-2.2 7,0 2.2,2.2 0,7 -2.2,2.2 -7,0 -2.2,-2.2" fill="#fbbf24" stroke="#d97706" stroke-width="1.2"/>
+            <circle cx="0" cy="0" r="1.5" fill="#ffffff"/>
+          </g>
+        `;
+      }
+
+      // 🍗 바삭 황금치킨 보유 시: 깜찍한 닭다리 모자
+      if (wakppuIngredients.includes('chicken')) {
+        accessories += `
+          <g transform="translate(50, 10)">
+            <ellipse cx="0" cy="0" rx="9" ry="6" fill="#d97706" stroke="#b45309" stroke-width="1.2"/>
+            <rect x="7" y="-2" width="6" height="4" rx="2" fill="#fef3c7" stroke="#b45309" stroke-width="1"/>
+            <circle cx="14" cy="-2" r="2.2" fill="#ffffff"/>
+            <circle cx="14" cy="2" r="2.2" fill="#ffffff"/>
+          </g>
+        `;
+      }
+
+      // 🍕 피자 보유 시: 조각 피자 핀
+      if (wakppuIngredients.includes('pizza')) {
+        accessories += `
+          <g transform="translate(24, 24)">
+            <polygon points="-6,-6 6,-6 0,8" fill="#f59e0b" stroke="#b45309" stroke-width="1"/>
+            <circle cx="-1" cy="-2" r="1.5" fill="#ef4444"/>
+            <circle cx="2" cy="2" r="1.2" fill="#ef4444"/>
+          </g>
+        `;
+      }
+
+      // 🥤 탄산 사이다 보유 시: 톡톡 피어오르는 탄산 기포
+      if (wakppuIngredients.includes('soda')) {
+        accessories += `
+          <circle cx="20" cy="30" r="2.5" fill="#e0f2fe" opacity="0.8"/>
+          <circle cx="80" cy="28" r="3" fill="#e0f2fe" opacity="0.8"/>
+          <circle cx="76" cy="18" r="2" fill="#e0f2fe" opacity="0.7"/>
+        `;
+      }
+
+      // 과자/쿠키 주근깨
+      if (wakppuIngredients.includes('lightning') || wakppuIngredients.includes('berry')) {
+        accessories += `
+          <circle cx="23" cy="55" r="1.6" fill="#f59e0b"/>
+          <circle cx="28" cy="52" r="1.4" fill="#ef4444"/>
+          <circle cx="33" cy="56" r="1.5" fill="#8b5cf6"/>
+          <circle cx="67" cy="56" r="1.5" fill="#8b5cf6"/>
+          <circle cx="72" cy="52" r="1.4" fill="#ef4444"/>
+          <circle cx="77" cy="55" r="1.6" fill="#f59e0b"/>
+        `;
+      }
+
+      // 고양이 귀
+      if (wakppuIngredients.includes('cat')) {
+        accessories += `
+          <polygon points="20,24 10,6 30,14" fill="#fda4af" stroke="#e11d48" stroke-width="1.5" stroke-linejoin="round"/>
+          <polygon points="80,24 90,6 70,14" fill="#fda4af" stroke="#e11d48" stroke-width="1.5" stroke-linejoin="round"/>
+        `;
+      }
+
+      // 눈송이
+      if (wakppuIngredients.includes('pudding')) {
+        accessories += `
+          <g transform="translate(28, 22)">
+            <path d="M -5 0 L 5 0 M 0 -5 L 0 5 M -3.5 -3.5 L 3.5 3.5 M -3.5 3.5 L 3.5 -3.5" stroke="#ffffff" stroke-width="1.6" stroke-linecap="round"/>
+          </g>
+        `;
+      }
+
+      return `
+        <svg viewBox="0 0 100 100" class="w-full h-full drop-shadow-md select-none pointer-events-none">
+          ${accessories}
+          ${blushPink}
+          ${eyesAndMouth}
+        </svg>
+      `;
+    }
+
+    function createNoiseBuffer(aCtx, duration = 0.5) {
+      const bufferSize = Math.floor(aCtx.sampleRate * duration);
+      const buffer = aCtx.createBuffer(1, bufferSize, aCtx.sampleRate);
+      const output = buffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) {
+        output[i] = Math.random() * 2 - 1;
+      }
+      return buffer;
+    }
+
+    // 음식 & 재료 ASMR 사운드 신디사이저 엔진 (음식 소리 대폭 추가!)
+    function playIngredientSound(soundType) {
+      try {
+        const aCtx = getAudioContext();
+        const now = aCtx.currentTime;
+
+        // 🍗 1. 바삭 크리스피 치킨 튀김옷 소리 (바사삭 와그작 크런치)
+        if (soundType === 'fried_crunch') {
+          const crunches = [0, 0.035, 0.07, 0.11];
+          crunches.forEach((delay, idx) => {
+            const noise = aCtx.createBufferSource();
+            noise.buffer = createNoiseBuffer(aCtx, 0.12);
+
+            const filter = aCtx.createBiquadFilter();
+            filter.type = 'bandpass';
+            filter.frequency.setValueAtTime(2600 - idx * 250, now + delay);
+            filter.Q.setValueAtTime(2.0, now + delay);
+
+            const gain = aCtx.createGain();
+            const startT = now + delay;
+            gain.gain.setValueAtTime(0.01, startT);
+            gain.gain.linearRampToValueAtTime(0.42, startT + 0.008);
+            gain.gain.exponentialRampToValueAtTime(0.001, startT + 0.11);
+
+            noise.connect(filter);
+            filter.connect(gain);
+            gain.connect(aCtx.destination);
+
+            noise.start(startT);
+            noise.stop(startT + 0.12);
+          });
+
+        // 🥩 2. 지글지글 고기/바비큐 굽는 소리 (지글지글 사각사각)
+        } else if (soundType === 'grill_sizzle') {
+          const noise = aCtx.createBufferSource();
+          noise.buffer = createNoiseBuffer(aCtx, 0.45);
+
+          const filter = aCtx.createBiquadFilter();
+          filter.type = 'bandpass';
+          filter.frequency.setValueAtTime(3200, now);
+          filter.frequency.linearRampToValueAtTime(2200, now + 0.4);
+          filter.Q.setValueAtTime(1.5, now);
+
+          const gain = aCtx.createGain();
+          gain.gain.setValueAtTime(0.01, now);
+          gain.gain.linearRampToValueAtTime(0.38, now + 0.05);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.44);
+
+          noise.connect(filter);
+          filter.connect(gain);
+          gain.connect(aCtx.destination);
+
+          noise.start(now);
+          noise.stop(now + 0.45);
+
+        // 🥤 3. 톡톡 탄산 사이다 / 콜라 소리 (촤아아~ 톡톡)
+        } else if (soundType === 'fizzy_soda') {
+          // 기포 쉬익 소리
+          const noise = aCtx.createBufferSource();
+          noise.buffer = createNoiseBuffer(aCtx, 0.35);
+          const filter = aCtx.createBiquadFilter();
+          filter.type = 'highpass';
+          filter.frequency.setValueAtTime(4500, now);
+          const gain = aCtx.createGain();
+          gain.gain.setValueAtTime(0.25, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+          noise.connect(filter);
+          filter.connect(gain);
+          gain.connect(aCtx.destination);
+          noise.start(now);
+          noise.stop(now + 0.35);
+
+          // 톡톡 튀는 물방울 기포 3개
+          [0.05, 0.12, 0.2].forEach(delay => {
+            const osc = aCtx.createOscillator();
+            const oGain = aCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(800 + Math.random() * 400, now + delay);
+            osc.frequency.exponentialRampToValueAtTime(1600, now + delay + 0.04);
+            oGain.gain.setValueAtTime(0.2, now + delay);
+            oGain.gain.exponentialRampToValueAtTime(0.001, now + delay + 0.05);
+            osc.connect(oGain);
+            oGain.connect(aCtx.destination);
+            osc.start(now + delay);
+            osc.stop(now + delay + 0.05);
+          });
+
+        // 🍕 4. 보글보글 피자 치즈 소리
+        } else if (soundType === 'bubble_sizzle') {
+          [0, 0.06, 0.12, 0.18].forEach(delay => {
+            const osc = aCtx.createOscillator();
+            const gn = aCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(320 + Math.random() * 180, now + delay);
+            osc.frequency.exponentialRampToValueAtTime(650, now + delay + 0.05);
+            gn.gain.setValueAtTime(0.25, now + delay);
+            gn.gain.exponentialRampToValueAtTime(0.001, now + delay + 0.06);
+            osc.connect(gn);
+            gn.connect(aCtx.destination);
+            osc.start(now + delay);
+            osc.stop(now + delay + 0.06);
+          });
+
+        // 🍯 5. 달콤 꿀 시럽 (쫀득하고 포근한 퐁당음)
+        } else if (soundType === 'sweet_syrup') {
+          const osc = aCtx.createOscillator();
+          const gain = aCtx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(380, now);
+          osc.frequency.exponentialRampToValueAtTime(180, now + 0.18);
+          gain.gain.setValueAtTime(0.3, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+          osc.connect(gain);
+          gain.connect(aCtx.destination);
+          osc.start(now);
+          osc.stop(now + 0.2);
+
+        // 🍡 6. 쫀득 찹쌀떡 (쫀득쫀득 찰진 소리)
+        } else if (soundType === 'chewy_rice') {
+          [0, 0.05, 0.11].forEach(delay => {
+            const osc = aCtx.createOscillator();
+            const gain = aCtx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(260 + delay * 300, now + delay);
+            osc.frequency.linearRampToValueAtTime(420, now + delay + 0.04);
+            gain.gain.setValueAtTime(0.26, now + delay);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + delay + 0.05);
+            osc.connect(gain);
+            gain.connect(aCtx.destination);
+            osc.start(now + delay);
+            osc.stop(now + delay + 0.05);
+          });
+
+        // 🍂 7. 마른 낙엽 바스락
+        } else if (soundType === 'leaves') {
+          const burstCount = 4;
+          for (let b = 0; b < burstCount; b++) {
+            const noise = aCtx.createBufferSource();
+            noise.buffer = createNoiseBuffer(aCtx, 0.15);
+            const filter = aCtx.createBiquadFilter();
+            filter.type = 'bandpass';
+            filter.frequency.setValueAtTime(1400 + Math.random() * 800, now + b * 0.05);
+            filter.Q.setValueAtTime(2.2, now + b * 0.05);
+
+            const gain = aCtx.createGain();
+            const startT = now + b * 0.045;
+            gain.gain.setValueAtTime(0.001, startT);
+            gain.gain.linearRampToValueAtTime(0.28, startT + 0.015);
+            gain.gain.exponentialRampToValueAtTime(0.001, startT + 0.12);
+
+            noise.connect(filter);
+            filter.connect(gain);
+            gain.connect(aCtx.destination);
+
+            noise.start(startT);
+            noise.stop(startT + 0.13);
+          }
+
+        // 🛍️ 8. 비닐 바스락
+        } else if (soundType === 'vinyl') {
+          const grainCount = 5;
+          for (let i = 0; i < grainCount; i++) {
+            const noise = aCtx.createBufferSource();
+            noise.buffer = createNoiseBuffer(aCtx, 0.12);
+            const filter = aCtx.createBiquadFilter();
+            filter.type = 'highpass';
+            filter.frequency.setValueAtTime(3200 + i * 400, now + i * 0.035);
+
+            const gain = aCtx.createGain();
+            const startT = now + i * 0.032;
+            gain.gain.setValueAtTime(0.001, startT);
+            gain.gain.linearRampToValueAtTime(0.3, startT + 0.01);
+            gain.gain.exponentialRampToValueAtTime(0.001, startT + 0.09);
+
+            noise.connect(filter);
+            filter.connect(gain);
+            gain.connect(aCtx.destination);
+
+            noise.start(startT);
+            noise.stop(startT + 0.1);
+          }
+
+        // 📜 9. 종이 바스락
+        } else if (soundType === 'paper') {
+          const noise = aCtx.createBufferSource();
+          noise.buffer = createNoiseBuffer(aCtx, 0.28);
+          const filter = aCtx.createBiquadFilter();
+          filter.type = 'bandpass';
+          filter.frequency.setValueAtTime(1800, now);
+          filter.frequency.exponentialRampToValueAtTime(950, now + 0.25);
+          filter.Q.setValueAtTime(1.8, now);
+
+          const gain = aCtx.createGain();
+          gain.gain.setValueAtTime(0.001, now);
+          gain.gain.linearRampToValueAtTime(0.35, now + 0.03);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.26);
+
+          noise.connect(filter);
+          filter.connect(gain);
+          gain.connect(aCtx.destination);
+
+          noise.start(now);
+          noise.stop(now + 0.27);
+
+        // 🍪 10. 과자 쿠키 크런치
+        } else if (soundType === 'crunch') {
+          [0, 0.03, 0.065].forEach((delay, idx) => {
+            const noise = aCtx.createBufferSource();
+            noise.buffer = createNoiseBuffer(aCtx, 0.14);
+            const filter = aCtx.createBiquadFilter();
+            filter.type = 'bandpass';
+            filter.frequency.setValueAtTime(2200 - idx * 300, now + delay);
+            filter.Q.setValueAtTime(1.5, now + delay);
+
+            const gain = aCtx.createGain();
+            const startT = now + delay;
+            gain.gain.setValueAtTime(0.01, startT);
+            gain.gain.linearRampToValueAtTime(0.4, startT + 0.008);
+            gain.gain.exponentialRampToValueAtTime(0.001, startT + 0.1);
+
+            noise.connect(filter);
+            filter.connect(gain);
+            gain.connect(aCtx.destination);
+
+            noise.start(startT);
+            noise.stop(startT + 0.11);
+          });
+
+        // 🌟 11. 별빛 바스락
+        } else if (soundType === 'sparkle') {
+          const noise = aCtx.createBufferSource();
+          noise.buffer = createNoiseBuffer(aCtx, 0.25);
+          const filter = aCtx.createBiquadFilter();
+          filter.type = 'highpass';
+          filter.frequency.setValueAtTime(4500, now);
+          const noiseGain = aCtx.createGain();
+          noiseGain.gain.setValueAtTime(0.2, now);
+          noiseGain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+          noise.connect(filter);
+          filter.connect(noiseGain);
+          noiseGain.connect(aCtx.destination);
+          noise.start(now);
+          noise.stop(now + 0.25);
+
+          [1760, 2637].forEach((f, idx) => {
+            const osc = aCtx.createOscillator();
+            const oGain = aCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(f, now + idx * 0.04);
+            oGain.gain.setValueAtTime(0.12, now + idx * 0.04);
+            oGain.gain.exponentialRampToValueAtTime(0.0001, now + idx * 0.04 + 0.35);
+            osc.connect(oGain);
+            oGain.connect(aCtx.destination);
+            osc.start(now + idx * 0.04);
+            osc.stop(now + idx * 0.04 + 0.35);
+          });
+
+        // 🫧 12. 뽁뽁이 비닐 바스락
+        } else if (soundType === 'bubble') {
+          const osc = aCtx.createOscillator();
+          const oscGain = aCtx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(450, now);
+          osc.frequency.exponentialRampToValueAtTime(1400, now + 0.06);
+          oscGain.gain.setValueAtTime(0.3, now);
+          oscGain.gain.exponentialRampToValueAtTime(0.001, now + 0.07);
+          osc.connect(oscGain);
+          oscGain.connect(aCtx.destination);
+          osc.start(now);
+          osc.stop(now + 0.07);
+
+          const noise = aCtx.createBufferSource();
+          noise.buffer = createNoiseBuffer(aCtx, 0.15);
+          const nFilter = aCtx.createBiquadFilter();
+          nFilter.type = 'bandpass';
+          nFilter.frequency.setValueAtTime(3200, now + 0.04);
+          const nGain = aCtx.createGain();
+          nGain.gain.setValueAtTime(0.2, now + 0.04);
+          nGain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
+          noise.connect(nFilter);
+          nFilter.connect(nGain);
+          nGain.connect(aCtx.destination);
+          noise.start(now + 0.04);
+          noise.stop(now + 0.18);
+
+        // ❄️ 13. 눈송이 뽀드득
+        } else if (soundType === 'snow') {
+          const noise = aCtx.createBufferSource();
+          noise.buffer = createNoiseBuffer(aCtx, 0.22);
+          const filter = aCtx.createBiquadFilter();
+          filter.type = 'bandpass';
+          filter.frequency.setValueAtTime(800, now);
+          filter.frequency.linearRampToValueAtTime(1500, now + 0.1);
+          filter.Q.setValueAtTime(3.5, now);
+          const gain = aCtx.createGain();
+          gain.gain.setValueAtTime(0.01, now);
+          gain.gain.linearRampToValueAtTime(0.38, now + 0.05);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
+          noise.connect(filter);
+          filter.connect(gain);
+          gain.connect(aCtx.destination);
+          noise.start(now);
+          noise.stop(now + 0.23);
+
+        // 🪐 14. 슬라임 / 쿠키 기포
+        } else if (soundType === 'slime' || soundType === 'cookie') {
+          [0, 0.04, 0.08, 0.12].forEach(p => {
+            const noise = aCtx.createBufferSource();
+            noise.buffer = createNoiseBuffer(aCtx, 0.07);
+            const flt = aCtx.createBiquadFilter();
+            flt.type = 'bandpass';
+            flt.frequency.setValueAtTime(2500 + Math.random() * 1200, now + p);
+            const gn = aCtx.createGain();
+            gn.gain.setValueAtTime(0.25, now + p);
+            gn.gain.exponentialRampToValueAtTime(0.001, now + p + 0.06);
+            noise.connect(flt);
+            flt.connect(gn);
+            gn.connect(aCtx.destination);
+            noise.start(now + p);
+            noise.stop(now + p + 0.07);
+          });
+        }
+      } catch (e) {
+        console.warn("Audio warning: ", e);
+      }
+    }
+
+    function playWakppuCustomCompositeSound() {
+      try {
+        const aCtx = getAudioContext();
+        const now = aCtx.currentTime;
+
+        const baseOsc = aCtx.createOscillator();
+        const baseGain = aCtx.createGain();
+        baseOsc.type = 'sine';
+        baseOsc.frequency.setValueAtTime(320, now);
+        baseOsc.frequency.exponentialRampToValueAtTime(540, now + 0.08);
+        baseGain.gain.setValueAtTime(0.25, now);
+        baseGain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+        baseOsc.connect(baseGain);
+        baseGain.connect(aCtx.destination);
+        baseOsc.start(now);
+        baseOsc.stop(now + 0.13);
+
+        if (wakppuIngredients.length === 0) {
+          const starter = STARTER_WAKPPU_CATALOG[selectedStarterKey] || STARTER_WAKPPU_CATALOG.pink;
+          playIngredientSound(starter.soundType);
+          return;
+        }
+
+        const uniqueSoundTypes = Array.from(new Set(wakppuIngredients.map(id => INGREDIENTS_CATALOG[id]?.soundType))).filter(Boolean);
+        uniqueSoundTypes.slice(0, 3).forEach((sType, idx) => {
+          setTimeout(() => {
+            playIngredientSound(sType);
+          }, idx * 60);
+        });
+
+      } catch (e) {
+        console.warn("Audio composite error: ", e);
+      }
+    }
+
+    function resizeCanvas() {
+      const container = document.getElementById('canvasContainer');
+      const rect = container.getBoundingClientRect();
+      const dpr = window.devicePixelRatio || 1;
+
+      const size = Math.floor(Math.min(rect.width, rect.height));
+      if (size <= 0) return;
+
+      canvas.width = size * dpr;
+      canvas.height = size * dpr;
+      canvas.style.width = size + 'px';
+      canvas.style.height = size + 'px';
+
+      ctx.resetTransform();
+      ctx.scale(dpr, dpr);
+
+      const padding = 20;
+      const usableSize = size - padding * 2;
+      cellPixelSize = usableSize / GRID_SIZE;
+      canvasOffset = { x: padding, y: padding };
+
+      renderCanvas();
+    }
+
+    function gridToPixel(x, y) {
+      return {
+        px: canvasOffset.x + x * cellPixelSize,
+        py: canvasOffset.y + y * cellPixelSize
+      };
+    }
+
+    function pixelToGrid(clientX, clientY) {
+      const rect = canvas.getBoundingClientRect();
+      const px = clientX - rect.left;
+      const py = clientY - rect.top;
+
+      const gx = Math.round((px - canvasOffset.x) / cellPixelSize);
+      const gy = Math.round((py - canvasOffset.y) / cellPixelSize);
+
+      if (gx >= 0 && gx <= GRID_SIZE && gy >= 0 && gy <= GRID_SIZE) {
+        const targetPixel = gridToPixel(gx, gy);
+        const dist = Math.hypot(px - targetPixel.px, py - targetPixel.py);
+        if (dist <= cellPixelSize * 0.75) {
+          return { x: gx, y: gy };
+        }
+      }
+      return null;
+    }
+
+    function isPointSame(a, b) {
+      return a && b && a.x === b.x && a.y === b.y;
+    }
+
+    function isEdgeSame(e1, e2) {
+      return (
+        (isPointSame(e1.p1, e2.p1) && isPointSame(e1.p2, e2.p2)) ||
+        (isPointSame(e1.p1, e2.p2) && isPointSame(e1.p2, e2.p1))
+      );
+    }
+
+    function getAllConnectablePoints() {
+      const currentQ = getCurrentQuestion();
+      if (!currentQ) return [];
+      return [...currentQ.givenPoints, ...userPoints];
+    }
+
+    function getGivenEdges(givenPoints) {
+      const edges = [];
+      for (let i = 0; i < givenPoints.length - 1; i++) {
+        edges.push({ p1: givenPoints[i], p2: givenPoints[i + 1] });
+      }
+      return edges;
+    }
+
+    function getTargetEdges(allVertices) {
+      const edges = [];
+      for (let i = 0; i < allVertices.length; i++) {
+        const nextIdx = (i + 1) % allVertices.length;
+        edges.push({ p1: allVertices[i], p2: allVertices[nextIdx] });
+      }
+      return edges;
+    }
+
+    function getStudentCompletedEdges(givenPoints, studentEdges) {
+      return [...getGivenEdges(givenPoints), ...studentEdges];
+    }
+
+    function checkIsPolygonComplete(question) {
+      if (!question) return false;
+      const fullVertices = [...question.givenPoints, ...question.targetRemainingPoints];
+      const targetEdges = getTargetEdges(fullVertices);
+      const studentAll = getStudentCompletedEdges(question.givenPoints, userEdges);
+
+      if (studentAll.length < targetEdges.length) return false;
+      return targetEdges.every(tEdge => studentAll.some(sEdge => isEdgeSame(tEdge, sEdge)));
+    }
+
+    function renderCanvas() {
+      const w = parseFloat(canvas.style.width);
+      const h = parseFloat(canvas.style.height);
+      if (!w || !h) return;
+      ctx.clearRect(0, 0, w, h);
+
+      const currentQ = getCurrentQuestion();
+      if (!currentQ) return;
+
+      const isShapeComplete = checkIsPolygonComplete(currentQ);
+
+      ctx.save();
+
+      if (rotationAngle !== 0) {
+        const centerPx = gridToPixel(CENTER_POINT.x, CENTER_POINT.y);
+        ctx.translate(centerPx.px, centerPx.py);
+        ctx.rotate(rotationAngle);
+        ctx.translate(-centerPx.px, -centerPx.py);
+      }
+
+      drawGrid();
+
+      if (showHint && isHintUnlocked) {
+        drawHintLines(currentQ);
+      }
+
+      drawFreehandStrokes();
+
+      if (isShapeComplete) {
+        drawCompletePolygonFill(currentQ);
+      }
+
+      drawGivenShape(currentQ.givenPoints);
+      drawUserEdges();
+      drawUserPoints();
+
+      if (currentTool === 'line' && selectedLineStartPoint) {
+        drawSelectedStartPoint(selectedLineStartPoint);
+      }
+
+      if (hoverGridPoint && rotationAngle === 0) {
+        drawHoverPoint(hoverGridPoint);
+      }
+
+      ctx.restore();
+
+      drawSymmetryCenter();
+    }
+
+    function drawFreehandStrokes() {
+      if (freehandStrokes.length === 0 && !currentStroke) return;
+      const allStrokes = currentStroke ? [...freehandStrokes, currentStroke] : freehandStrokes;
+
+      allStrokes.forEach(stroke => {
+        if (!stroke.points || stroke.points.length < 2) return;
+        ctx.save();
+        ctx.beginPath();
+        ctx.strokeStyle = stroke.color;
+        ctx.lineWidth = stroke.width;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+
+        ctx.moveTo(stroke.points[0].x, stroke.points[0].y);
+        for (let i = 1; i < stroke.points.length; i++) {
+          ctx.lineTo(stroke.points[i].x, stroke.points[i].y);
+        }
+        ctx.stroke();
+        ctx.restore();
+      });
+    }
+
+    function drawGrid() {
+      ctx.lineWidth = 1;
+      ctx.strokeStyle = '#e2e8f0';
+
+      for (let i = 0; i <= GRID_SIZE; i++) {
+        const p1 = gridToPixel(i, 0);
+        const p2 = gridToPixel(i, GRID_SIZE);
+        ctx.beginPath();
+        if (i === CENTER_POINT.x) {
+          ctx.strokeStyle = '#cbd5e1';
+          ctx.lineWidth = 1.5;
+        } else {
+          ctx.strokeStyle = '#e2e8f0';
+          ctx.lineWidth = 1;
+        }
+        ctx.moveTo(p1.px, p1.py);
+        ctx.lineTo(p2.px, p2.py);
+        ctx.stroke();
+
+        const p3 = gridToPixel(0, i);
+        const p4 = gridToPixel(GRID_SIZE, i);
+        ctx.beginPath();
+        if (i === CENTER_POINT.y) {
+          ctx.strokeStyle = '#cbd5e1';
+          ctx.lineWidth = 1.5;
+        } else {
+          ctx.strokeStyle = '#e2e8f0';
+          ctx.lineWidth = 1;
+        }
+        ctx.moveTo(p3.px, p3.py);
+        ctx.lineTo(p4.px, p4.py);
+        ctx.stroke();
+      }
+
+      ctx.fillStyle = '#94a3b8';
+      for (let x = 0; x <= GRID_SIZE; x++) {
+        for (let y = 0; y <= GRID_SIZE; y++) {
+          const pt = gridToPixel(x, y);
+          ctx.beginPath();
+          ctx.arc(pt.px, pt.py, 1.4, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+    }
+
+    function drawSymmetryCenter() {
+      const center = gridToPixel(CENTER_POINT.x, CENTER_POINT.y);
+
+      ctx.beginPath();
+      ctx.arc(center.px, center.py, 13, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(239, 68, 68, 0.18)';
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.arc(center.px, center.py, 6, 0, Math.PI * 2);
+      ctx.fillStyle = '#ef4444';
+      ctx.fill();
+      ctx.lineWidth = 2.5;
+      ctx.strokeStyle = '#ffffff';
+      ctx.stroke();
+
+      ctx.font = 'bold 13px "Jua", sans-serif';
+      ctx.fillStyle = '#b91c1c';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'bottom';
+      ctx.fillText('대칭의 중심 (ㅇ)', center.px, center.py - 13);
+    }
+
+    function drawCompletePolygonFill(question) {
+      const fullVertices = [...question.givenPoints, ...question.targetRemainingPoints];
+      if (fullVertices.length < 3) return;
+
+      ctx.beginPath();
+      const p0 = gridToPixel(fullVertices[0].x, fullVertices[0].y);
+      ctx.moveTo(p0.px, p0.py);
+
+      for (let i = 1; i < fullVertices.length; i++) {
+        const pt = gridToPixel(fullVertices[i].x, fullVertices[i].y);
+        ctx.lineTo(pt.px, pt.py);
+      }
+      ctx.closePath();
+      ctx.fillStyle = 'rgba(16, 185, 129, 0.2)';
+      ctx.fill();
+    }
+
+    function drawGivenShape(points) {
+      if (!points || points.length === 0) return;
+
+      ctx.beginPath();
+      const start = gridToPixel(points[0].x, points[0].y);
+      ctx.moveTo(start.px, start.py);
+
+      for (let i = 1; i < points.length; i++) {
+        const pt = gridToPixel(points[i].x, points[i].y);
+        ctx.lineTo(pt.px, pt.py);
+      }
+
+      ctx.lineWidth = 3.5;
+      ctx.strokeStyle = '#2563eb';
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.stroke();
+
+      const koreanLetters = ['ㄱ', 'ㄴ', 'ㄷ', 'ㄹ', 'ㅁ', 'ㅂ', 'ㅅ', 'ㅈ', 'ㅊ', 'ㅋ', 'ㅌ', 'ㅍ', 'ㅎ'];
+      points.forEach((p, idx) => {
+        const pt = gridToPixel(p.x, p.y);
+        ctx.beginPath();
+        ctx.arc(pt.px, pt.py, 5.5, 0, Math.PI * 2);
+        ctx.fillStyle = '#1d4ed8';
+        ctx.fill();
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = '#ffffff';
+        ctx.stroke();
+
+        if (koreanLetters[idx]) {
+          ctx.font = 'bold 12px sans-serif';
+          ctx.fillStyle = '#1e40af';
+          ctx.fillText(`점 ${koreanLetters[idx]}`, pt.px + 10, pt.py - 6);
+        }
+      });
+    }
+
+    function drawUserEdges() {
+      if (userEdges.length === 0) return;
+      ctx.save();
+      ctx.lineWidth = 3.5;
+      ctx.strokeStyle = '#059669';
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+
+      userEdges.forEach(edge => {
+        const p1 = gridToPixel(edge.p1.x, edge.p1.y);
+        const p2 = gridToPixel(edge.p2.x, edge.p2.y);
+        ctx.beginPath();
+        ctx.moveTo(p1.px, p1.py);
+        ctx.lineTo(p2.px, p2.py);
+        ctx.stroke();
+      });
+      ctx.restore();
+    }
+
+    function drawUserPoints() {
+      userPoints.forEach((p, i) => {
+        const pt = gridToPixel(p.x, p.y);
+        ctx.beginPath();
+        ctx.arc(pt.px, pt.py, 6, 0, Math.PI * 2);
+        ctx.fillStyle = '#10b981';
+        ctx.fill();
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = '#ffffff';
+        ctx.stroke();
+
+        ctx.font = 'bold 11px sans-serif';
+        ctx.fillStyle = '#065f46';
+        ctx.fillText(`대응점 ${i + 1}`, pt.px + 10, pt.py - 6);
+      });
+    }
+
+    function drawSelectedStartPoint(pt) {
+      const p = gridToPixel(pt.x, pt.y);
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(p.px, p.py, 11, 0, Math.PI * 2);
+      ctx.strokeStyle = '#6366f1';
+      ctx.lineWidth = 3;
+      ctx.setLineDash([3, 3]);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function drawHoverPoint(gridPt) {
+      const pt = gridToPixel(gridPt.x, gridPt.y);
+      ctx.beginPath();
+      ctx.arc(pt.px, pt.py, 8, 0, Math.PI * 2);
+      ctx.strokeStyle = currentTool === 'line' ? '#6366f1' : '#10b981';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.arc(pt.px, pt.py, 4, 0, Math.PI * 2);
+      ctx.fillStyle = currentTool === 'line' ? '#818cf8' : '#34d399';
+      ctx.fill();
+    }
+
+    function drawHintLines(question) {
+      const targetPoints = question.targetRemainingPoints;
+      ctx.save();
+      ctx.setLineDash([4, 4]);
+      ctx.lineWidth = 1.5;
+      ctx.strokeStyle = '#f59e0b';
+
+      targetPoints.forEach((targetP, idx) => {
+        const originX = 2 * CENTER_POINT.x - targetP.x;
+        const originY = 2 * CENTER_POINT.y - targetP.y;
+
+        const p1 = gridToPixel(originX, originY);
+        const p2 = gridToPixel(targetP.x, targetP.y);
+
+        ctx.beginPath();
+        ctx.moveTo(p1.px, p1.py);
+        ctx.lineTo(p2.px, p2.py);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.arc(p2.px, p2.py, 6, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(245, 158, 11, 0.35)';
+        ctx.fill();
+        ctx.strokeStyle = '#d97706';
+        ctx.stroke();
+
+        ctx.font = 'bold 10px sans-serif';
+        ctx.fillStyle = '#b45309';
+        ctx.fillText(`(목표 ${idx + 1})`, p2.px + 8, p2.py + 12);
+      });
+
+      ctx.restore();
+    }
+
+    function handlePointerDown(e) {
+      if (isRotating) return;
+
+      const clientX = e.clientX !== undefined ? e.clientX : (e.touches && e.touches[0].clientX);
+      const clientY = e.clientY !== undefined ? e.clientY : (e.touches && e.touches[0].clientY);
+      if (clientX === undefined || clientY === undefined) return;
+
+      const rect = canvas.getBoundingClientRect();
+      const px = clientX - rect.left;
+      const py = clientY - rect.top;
+
+      if (currentTool === 'pen') {
+        currentStroke = {
+          color: penColor,
+          width: penLineWidth,
+          points: [{ x: px, y: py }]
+        };
+        renderCanvas();
+        return;
+      }
+
+      const gridPt = pixelToGrid(clientX, clientY);
+      if (!gridPt) return;
+
+      // 점 찍기 모드
+      if (currentTool === 'point') {
+        const currentQ = getCurrentQuestion();
+        const maxPoints = currentQ.targetRemainingPoints.length;
+
+        const isGiven = currentQ.givenPoints.some(p => p.x === gridPt.x && p.y === gridPt.y);
+        if (isGiven) return;
+
+        const existingIdx = userPoints.findIndex(p => p.x === gridPt.x && p.y === gridPt.y);
+        if (existingIdx !== -1) {
+          const removed = userPoints.splice(existingIdx, 1)[0];
+          userEdges = userEdges.filter(edge => !isPointSame(edge.p1, removed) && !isPointSame(edge.p2, removed));
+          playSound('undo');
+          isCurrentQuestionGraded = false; // 도형 수정 시 채점 플래그 초기화
+          updateProgressUI();
+          renderCanvas();
+          return;
+        }
+
+        if (userPoints.length >= maxPoints) {
+          setCurrentTool('line');
+          playSound('click');
+          return;
+        }
+
+        userPoints.push({ x: gridPt.x, y: gridPt.y });
+        playSound('click');
+        isCurrentQuestionGraded = false; // 새로운 점 추가 시 채점 플래그 초기화
+
+        if (userPoints.length === maxPoints) {
+          const badge = document.getElementById('shapeClosedBadge');
+          badge.innerHTML = '<i class="fa-solid fa-ruler-combined"></i> 모든 대응점을 찍었습니다! [점과 점 잇기]로 선을 연결해 보세요.';
+          badge.classList.remove('hidden');
+        }
+
+        updateProgressUI();
+        renderCanvas();
+        return;
+      }
+
+      // 점과 점 잇기 모드
+      if (currentTool === 'line') {
+        const connectable = getAllConnectablePoints();
+        const clickedPoint = connectable.find(p => p.x === gridPt.x && p.y === gridPt.y);
+
+        if (!clickedPoint) {
+          selectedLineStartPoint = null;
+          renderCanvas();
+          return;
+        }
+
+        if (!selectedLineStartPoint) {
+          selectedLineStartPoint = clickedPoint;
+          playSound('click');
+          renderCanvas();
+        } else {
+          if (isPointSame(selectedLineStartPoint, clickedPoint)) {
+            selectedLineStartPoint = null;
+            playSound('undo');
+            renderCanvas();
+            return;
+          }
+
+          const newEdge = { p1: selectedLineStartPoint, p2: clickedPoint };
+          const alreadyExists = userEdges.some(e => isEdgeSame(e, newEdge));
+
+          if (!alreadyExists) {
+            userEdges.push(newEdge);
+            playSound('connect');
+          } else {
+            userEdges = userEdges.filter(e => !isEdgeSame(e, newEdge));
+            playSound('undo');
+          }
+
+          selectedLineStartPoint = null;
+          isCurrentQuestionGraded = false; // 선 수정 시 채점 플래그 초기화
+          updateProgressUI();
+          renderCanvas();
+        }
+      }
+    }
+
+    function handlePointerMove(e) {
+      if (isRotating) return;
+
+      const clientX = e.clientX !== undefined ? e.clientX : (e.touches && e.touches[0].clientX);
+      const clientY = e.clientY !== undefined ? e.clientY : (e.touches && e.touches[0].clientY);
+      if (clientX === undefined || clientY === undefined) return;
+
+      const rect = canvas.getBoundingClientRect();
+      const px = clientX - rect.left;
+      const py = clientY - rect.top;
+
+      if (currentTool === 'pen' && currentStroke) {
+        currentStroke.points.push({ x: px, y: py });
+        renderCanvas();
+        return;
+      }
+
+      if (currentTool === 'point' || currentTool === 'line') {
+        const gridPt = pixelToGrid(clientX, clientY);
+        if (gridPt) {
+          hoverGridPoint = gridPt;
+        } else {
+          hoverGridPoint = null;
+        }
+        renderCanvas();
+      }
+    }
+
+    function handlePointerUp() {
+      if (currentStroke) {
+        if (currentStroke.points.length > 1) {
+          freehandStrokes.push(currentStroke);
+        }
+        currentStroke = null;
+        renderCanvas();
+      }
+    }
+
+    function handlePointerLeave() {
+      if (currentStroke) {
+        if (currentStroke.points.length > 1) {
+          freehandStrokes.push(currentStroke);
+        }
+        currentStroke = null;
+      }
+      hoverGridPoint = null;
+      renderCanvas();
+    }
+
+    canvas.addEventListener('mousedown', handlePointerDown);
+    canvas.addEventListener('mousemove', handlePointerMove);
+    canvas.addEventListener('mouseup', handlePointerUp);
+    canvas.addEventListener('mouseleave', handlePointerLeave);
+
+    canvas.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      handlePointerDown(e);
+    }, { passive: false });
+
+    canvas.addEventListener('touchmove', (e) => {
+      e.preventDefault();
+      handlePointerMove(e);
+    }, { passive: false });
+
+    canvas.addEventListener('touchend', (e) => {
+      e.preventDefault();
+      handlePointerUp();
+    }, { passive: false });
+
+    function setCurrentTool(tool) {
+      currentTool = tool;
+      selectedLineStartPoint = null;
+
+      const pointBtn = document.getElementById('toolPointBtn');
+      const lineBtn = document.getElementById('toolLineBtn');
+      const penBtn = document.getElementById('toolPenBtn');
+      const statusDot = document.getElementById('currentToolStatusDot');
+      const guideText = document.getElementById('currentToolGuideText');
+
+      if (pointBtn) pointBtn.classList.toggle('active', tool === 'point');
+      if (lineBtn) lineBtn.classList.toggle('active', tool === 'line');
+      if (penBtn) penBtn.classList.toggle('active', tool === 'pen');
+
+      if (tool === 'point') {
+        if (statusDot) statusDot.className = 'inline-block w-3 h-3 rounded-full bg-emerald-500 animate-pulse';
+        if (guideText) guideText.innerText = '[점 찍기 모드] 모눈 격자를 톡 터치/클릭하여 대응점을 찍으세요.';
+      } else if (tool === 'line') {
+        if (statusDot) statusDot.className = 'inline-block w-3 h-3 rounded-full bg-indigo-500 animate-pulse';
+        if (guideText) guideText.innerText = '[점과 점 잇기 모드] 이을 첫 번째 점을 누른 후, 두 번째 점을 누르세요!';
+      } else {
+        if (statusDot) statusDot.className = 'inline-block w-3 h-3 rounded-full bg-amber-500 animate-pulse';
+        if (guideText) guideText.innerText = '[보조선 그리기 모드] 대칭의 중심까지 칸 수나 보조선을 자유롭게 그려보세요!';
+      }
+      renderCanvas();
+    }
+
+    function setPenColor(color) {
+      penColor = color;
+      if (currentTool !== 'pen') {
+        setCurrentTool('pen');
+      }
+    }
+
+    function clearFreehandStrokes() {
+      if (freehandStrokes.length > 0 || currentStroke) {
+        freehandStrokes = [];
+        currentStroke = null;
+        playSound('undo');
+        renderCanvas();
+      }
+    }
+
+    function undoLastPoint() {
+      if (userPoints.length > 0) {
+        const removed = userPoints.pop();
+        userEdges = userEdges.filter(edge => !isPointSame(edge.p1, removed) && !isPointSame(edge.p2, removed));
+        playSound('undo');
+        isCurrentQuestionGraded = false;
+        document.getElementById('shapeClosedBadge').classList.add('hidden');
+        updateProgressUI();
+        renderCanvas();
+      }
+    }
+
+    function undoLastLine() {
+      if (userEdges.length > 0) {
+        userEdges.pop();
+        playSound('undo');
+        isCurrentQuestionGraded = false;
+        updateProgressUI();
+        renderCanvas();
+      }
+    }
+
+    function resetCurrentDrawing() {
+      if (userPoints.length > 0 || userEdges.length > 0 || freehandStrokes.length > 0) {
+        userPoints = [];
+        userEdges = [];
+        freehandStrokes = [];
+        selectedLineStartPoint = null;
+        isCurrentQuestionGraded = false;
+        playSound('undo');
+        document.getElementById('shapeClosedBadge').classList.add('hidden');
+        updateProgressUI();
+        renderCanvas();
+      }
+    }
+
+    function getCurrentQuestion() {
+      const list = QUESTION_BANK[currentDifficulty];
+      return list[currentQuestionIndex % list.length];
+    }
+
+    function updateProgressUI() {
+      const q = getCurrentQuestion();
+      const neededPoints = q.targetRemainingPoints.length;
+      const currentPoints = userPoints.length;
+      
+      const fullVertices = [...q.givenPoints, ...q.targetRemainingPoints];
+      const targetEdges = getTargetEdges(fullVertices);
+      const givenEdges = getGivenEdges(q.givenPoints);
+      const neededLines = targetEdges.length - givenEdges.length;
+
+      const dotBadge = document.getElementById('dotProgress');
+      const lineBadge = document.getElementById('lineProgress');
+      if (dotBadge) dotBadge.innerText = `대응점: ${currentPoints} / ${neededPoints}개`;
+      if (lineBadge) lineBadge.innerText = `선: ${userEdges.length} / ${neededLines}개`;
+
+      const statusHint = document.getElementById('submitStatusHint');
+      const isComplete = checkIsPolygonComplete(q);
+
+      if (statusHint) {
+        if (isCurrentQuestionGraded) {
+          statusHint.innerText = "✅ 이미 정답 채점이 완료되었습니다. [다음 문제]로 넘어가세요!";
+          statusHint.className = "text-center text-[11px] text-indigo-600 font-bold";
+        } else if (isComplete) {
+          statusHint.innerText = "✨ 다각형이 완성되었습니다! [채점하기]를 눌러보세요.";
+          statusHint.className = "text-center text-[11px] text-emerald-600 font-bold";
+        } else if (currentPoints === neededPoints && userEdges.length === 0) {
+          statusHint.innerText = "👉 점을 다 찍었습니다. 상단 [점과 점 잇기]로 선을 연결하세요!";
+          statusHint.className = "text-center text-[11px] text-indigo-600 font-bold animate-pulse";
+        } else {
+          statusHint.innerText = `대응점을 찍고 점과 점을 차례대로 연결하세요.`;
+          statusHint.className = "text-center text-[11px] text-slate-400";
+        }
+      }
+    }
+
+    function checkAnswer() {
+      // 이미 정답으로 채점 완료된 상태라면 중복 점수 획득 방지 및 안내
+      if (isCurrentQuestionGraded) {
+        showCustomFeedback(
+          true,
+          "이미 맞힌 문제입니다!",
+          "현재 문제를 이미 성공적으로 해결했습니다. 상단 '다른 문제' 또는 모달의 '다음 문제' 버튼을 눌러 새 문제에 도전하세요!"
+        );
+        return;
+      }
+
+      const currentQ = getCurrentQuestion();
+      const targetPoints = currentQ.targetRemainingPoints;
+
+      if (userPoints.length === 0 && userEdges.length === 0) {
+        showCustomFeedback(false, "도형을 그려보세요!", "대응점을 찍고 [점과 점 잇기]로 선을 연결해 완성해 주세요.");
+        return;
+      }
+
+      totalAttempts++;
+
+      const allPointsCorrect = targetPoints.every(tp => 
+        userPoints.some(up => up.x === tp.x && up.y === tp.y)
+      );
+
+      const isShapeComplete = checkIsPolygonComplete(currentQ);
+
+      if (allPointsCorrect && isShapeComplete) {
+        isCurrentQuestionGraded = true; // 채점 성공 플래그 설정
+        playSound('correct');
+        streak++;
+        correctCount++;
+        solvedPerLevel[currentDifficulty]++;
+
+        let gained = currentDifficulty * 100;
+        if (!showHint) gained += 30;
+        if (streak > 1) gained += (streak - 1) * 20;
+
+        score += gained;
+        updateStats();
+        updateLevelTabUI();
+
+        if (currentDifficulty === 1 && solvedPerLevel[1] === 5 && !unlockedLevels.includes(2)) {
+          unlockedLevels.push(2);
+          updateLevelTabUI();
+          triggerWakppuRewardModal(gained, true, 2);
+          return;
+        }
+
+        if (currentDifficulty === 2 && solvedPerLevel[2] === 5 && !unlockedLevels.includes(3)) {
+          unlockedLevels.push(3);
+          updateLevelTabUI();
+          triggerWakppuRewardModal(gained, true, 3);
+          return;
+        }
+
+        triggerWakppuRewardModal(gained);
+      } else {
+        playSound('wrong');
+        streak = 0;
+        unlockHintButton();
+        updateStats();
+
+        let desc = "일부 점의 위치가 다르거나 선이 덜 이어졌습니다.\n💡 틀렸으므로 '힌트선 보기' 버튼이 열렸습니다. 힌트를 켜서 올바른 대응점 위치를 확인해 보세요!";
+        if (!allPointsCorrect) {
+          desc = `대응점의 위치나 개수를 다시 확인해 보세요. (목표: ${targetPoints.length}개)\n💡 '힌트선 보기'를 켜면 올바른 위치를 점선으로 볼 수 있습니다.`;
+        } else if (!isShapeComplete) {
+          desc = `점은 잘 찍었습니다! 상단의 [점과 점 잇기] 모드를 선택하여 점과 점 사이의 선을 닫힌 도형이 되도록 모두 이어주세요.`;
+        }
+
+        showCustomFeedback(false, "아쉬워요! 다시 확인해 볼까요?", desc);
+      }
+    }
+
+    function selectStarterWakppu(starterKey) {
+      selectedStarterKey = starterKey;
+      const starterCards = document.querySelectorAll('#starterWakppuSelector > button');
+      starterCards.forEach(btn => {
+        btn.classList.remove('border-pink-500', 'bg-pink-50', 'scale-105', 'shadow-sm');
+        btn.classList.add('border-slate-200', 'bg-slate-50');
+      });
+      const selectedBtn = document.getElementById(`starter_${starterKey}`);
+      if (selectedBtn) {
+        selectedBtn.classList.remove('border-slate-200', 'bg-slate-50');
+        selectedBtn.classList.add('border-pink-500', 'bg-pink-50', 'scale-105', 'shadow-sm');
+      }
+      const starter = STARTER_WAKPPU_CATALOG[starterKey];
+      if (starter) {
+        playIngredientSound(starter.soundType);
+      }
+    }
+
+    // 문제 정답 시 신규 재료/음식 획득 모달
+    function triggerWakppuRewardModal(gained, isLevelUp = false, nextLevelToJump = 0) {
+      const keys = Object.keys(INGREDIENTS_CATALOG);
+      const shuffled = [...keys].sort(() => Math.random() - 0.5);
+      const candidates = shuffled.slice(0, 3);
+
+      pendingEarnedIngredient = candidates[0];
+
+      const container = document.getElementById('ingredientChoiceContainer');
+      container.innerHTML = '';
+
+      candidates.forEach((ingKey, idx) => {
+        const item = INGREDIENTS_CATALOG[ingKey];
+        const isDefault = idx === 0;
+
+        const card = document.createElement('div');
+        card.id = `ingCard_${item.id}`;
+        card.className = `p-3 rounded-2xl border-2 transition cursor-pointer flex flex-col items-center justify-between text-center select-none ${
+          isDefault ? 'border-pink-500 bg-pink-50 shadow-md scale-105' : 'border-slate-200 bg-slate-50 hover:bg-slate-100'
+        }`;
+        card.onclick = () => selectIngredientChoice(item.id);
+
+        const badgeHtml = item.category === 'food' 
+          ? `<span class="text-[9px] font-black px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-800 mb-1">🍔 맛있는 음식</span>`
+          : `<span class="text-[9px] font-black px-1.5 py-0.5 rounded-full bg-indigo-100 text-indigo-800 mb-1">✨ 신기한 재료</span>`;
+
+        card.innerHTML = `
+          ${badgeHtml}
+          <div class="text-3xl mb-1">${item.icon}</div>
+          <span class="text-xs font-bold text-slate-800 leading-tight">${item.name}</span>
+          <span class="text-[10px] text-slate-400 mt-1">${item.desc}</span>
+        `;
+        container.appendChild(card);
+      });
+
+      const confirmBtn = document.getElementById('addIngredientConfirmBtn');
+      confirmBtn.onclick = () => {
+        if (pendingEarnedIngredient) {
+          addIngredientToWakppu(pendingEarnedIngredient);
+        }
+        document.getElementById('wakppuIngredientModal').classList.add('hidden');
+        
+        if (isLevelUp) {
+          showCustomFeedback(
+            true,
+            `${nextLevelToJump}단계 잠금 해제! 🎉`,
+            `왁뿌볼에 새 아이템을 넣었습니다!\n이제 ${nextLevelToJump}단계 문제에 도전할 수 있습니다!`,
+            gained,
+            true,
+            nextLevelToJump
+          );
+        } else {
+          showCustomFeedback(
+            true,
+            "🎉 완벽한 점대칭도형 & 아이템 획득!",
+            "대응점을 찾아 직접 선으로 완벽하게 이어 왁뿌볼에 새로운 소리와 음식을 쏙 넣었습니다!",
+            gained
+          );
+        }
+      };
+
+      document.getElementById('wakppuIngredientModal').classList.remove('hidden');
+      playSound('correct');
+    }
+
+    function selectIngredientChoice(ingId) {
+      pendingEarnedIngredient = ingId;
+      const allCards = document.querySelectorAll('#ingredientChoiceContainer > div');
+      allCards.forEach(c => {
+        c.className = 'p-3 rounded-2xl border-2 transition cursor-pointer flex flex-col items-center justify-between text-center select-none border-slate-200 bg-slate-50 hover:bg-slate-100';
+      });
+      const selected = document.getElementById(`ingCard_${ingId}`);
+      if (selected) {
+        selected.className = 'p-3 rounded-2xl border-2 transition cursor-pointer flex flex-col items-center justify-between text-center select-none border-pink-500 bg-pink-50 shadow-md scale-105';
+      }
+      const ing = INGREDIENTS_CATALOG[ingId];
+      if (ing) {
+        playIngredientSound(ing.soundType);
+      }
+    }
+
+    function addIngredientToWakppu(ingId) {
+      const ing = INGREDIENTS_CATALOG[ingId];
+      if (!ing) return;
+
+      wakppuIngredients.push(ingId);
+      updateWakppuUI(true);
+      playWakppuCustomCompositeSound();
+    }
+
+    function updateWakppuUI(triggerBounce = false) {
+      const starter = STARTER_WAKPPU_CATALOG[selectedStarterKey] || STARTER_WAKPPU_CATALOG.pink;
+      const appearance = getWakppuAppearance();
+
+      const countEl = document.getElementById('headerIngredientCount');
+      if (countEl) countEl.innerText = `${wakppuIngredients.length}개`;
+      const headerBall = document.getElementById('headerWakppuBall');
+      if (headerBall) {
+        headerBall.style.background = appearance.gradient;
+        headerBall.style.boxShadow = appearance.boxShadow;
+      }
+
+      const sideStageBadge = document.getElementById('sideGrowthStageBadge');
+      const sideIngredientCount = document.getElementById('sideIngredientCount');
+      if (sideIngredientCount) sideIngredientCount.innerText = wakppuIngredients.length;
+
+      let growthTitle = "🌱 1단계 아기 왁뿌";
+      if (wakppuIngredients.length >= 7) {
+        growthTitle = "👑 4단계 슈퍼 마스터 왁뿌";
+      } else if (wakppuIngredients.length >= 4) {
+        growthTitle = "⭐ 3단계 팡팡 왁뿌볼";
+      } else if (wakppuIngredients.length >= 2) {
+        growthTitle = "🌿 2단계 쑥쑥 왁뿌볼";
+      }
+      if (sideStageBadge) sideStageBadge.innerText = growthTitle;
+
+      const sideBody = document.getElementById('sideWakppuBody');
+      const sideFace = document.getElementById('sideWakppuFace');
+      const sideTexture = document.getElementById('sideWakppuTexture');
+      const sideAura = document.getElementById('sideWakppuAura');
+
+      if (sideBody) {
+        sideBody.style.background = appearance.gradient;
+        sideBody.style.boxShadow = appearance.boxShadow;
+        if (triggerBounce) {
+          sideBody.classList.remove('jelly-active');
+          void sideBody.offsetWidth;
+          sideBody.classList.add('jelly-active');
+        }
+      }
+      if (sideTexture) {
+        sideTexture.innerHTML = appearance.textureHtml;
+      }
+      if (sideAura && wakppuIngredients.length > 0) {
+        const lastIng = INGREDIENTS_CATALOG[wakppuIngredients[wakppuIngredients.length - 1]];
+        if (lastIng) {
+          sideAura.style.background = `radial-gradient(circle, ${lastIng.color} 0%, ${starter.baseColor} 70%)`;
+        }
+      }
+      if (sideFace) {
+        sideFace.innerHTML = renderWakppuFaceSvg(starter.defaultMood || 'happy');
+      }
+
+      const sideParticles = document.getElementById('sideWakppuParticles');
+      if (sideParticles) {
+        sideParticles.innerHTML = '';
+        wakppuIngredients.slice(-6).forEach((id, i) => {
+          const ing = INGREDIENTS_CATALOG[id];
+          if (!ing) return;
+          const span = document.createElement('div');
+          span.className = 'absolute text-xs animate-bounce opacity-85 select-none pointer-events-none';
+          span.style.animationDuration = `${1.8 + (i % 3) * 0.4}s`;
+          const radius = 16 + (i * 6) % 24;
+          const angle = (i * (360 / Math.max(wakppuIngredients.length, 1))) * (Math.PI / 180);
+          span.style.transform = `translate(${Math.cos(angle) * radius}px, ${Math.sin(angle) * radius}px)`;
+          span.innerText = ing.icon;
+          sideParticles.appendChild(span);
+        });
+      }
+
+      const pillsContainer = document.getElementById('sideIngredientPills');
+      if (pillsContainer) {
+        if (wakppuIngredients.length === 0) {
+          pillsContainer.innerHTML = '<span class="text-[10px] text-slate-400 italic">문제를 풀고 신기한 재료를 모아보세요!</span>';
+        } else {
+          pillsContainer.innerHTML = '';
+          wakppuIngredients.forEach((id) => {
+            const ing = INGREDIENTS_CATALOG[id];
+            if (!ing) return;
+            const span = document.createElement('span');
+            span.className = 'px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-white/20 text-white flex items-center gap-1 shadow-sm';
+            span.innerHTML = `${ing.icon} <span>${ing.name}</span>`;
+            pillsContainer.appendChild(span);
+          });
+        }
+      }
+
+      const st3Btn = document.getElementById('stage3CompleteBtn');
+      if (st3Btn) {
+        if (currentDifficulty === 3) {
+          st3Btn.classList.remove('hidden');
+        } else {
+          st3Btn.classList.add('hidden');
+        }
+      }
+    }
+
+    function pokeSideWakppu() {
+      const sideBody = document.getElementById('sideWakppuBody');
+      const sideFace = document.getElementById('sideWakppuFace');
+      const text = document.getElementById('sideWakppuReactionText');
+
+      if (sideBody) {
+        sideBody.classList.remove('jelly-active');
+        void sideBody.offsetWidth;
+        sideBody.classList.add('jelly-active');
+      }
+
+      const moods = ['wink', 'excited', 'cat', 'starry', 'sparkle', 'proud', 'yummy'];
+      const randMood = moods[Math.floor(Math.random() * moods.length)];
+      if (sideFace) sideFace.innerHTML = renderWakppuFaceSvg(randMood);
+
+      playWakppuCustomCompositeSound();
+
+      if (wakppuIngredients.length > 0) {
+        const randId = wakppuIngredients[Math.floor(Math.random() * wakppuIngredients.length)];
+        const ing = INGREDIENTS_CATALOG[randId];
+        if (text) text.innerHTML = `${ing.icon} <b>${ing.name}</b>의 <b>[${ing.desc}]</b>!`;
+      } else {
+        if (text) text.innerText = '바스락! 문제를 맞히면 새 재료 & 음식이 쏙!';
+      }
+    }
+
+    function openWakppuShowcaseModal() {
+      const modal = document.getElementById('wakppuShowcaseModal');
+      const starter = STARTER_WAKPPU_CATALOG[selectedStarterKey] || STARTER_WAKPPU_CATALOG.pink;
+      const appearance = getWakppuAppearance();
+
+      document.getElementById('showcaseStudentName').innerText = studentName || "수학이";
+      document.getElementById('showcaseIngredientTotal').innerText = wakppuIngredients.length;
+
+      const mainBall = document.getElementById('interactiveWakppuBall');
+      const mainTexture = document.getElementById('showcaseWakppuTexture');
+      if (mainBall) {
+        mainBall.style.background = appearance.gradient;
+        mainBall.style.boxShadow = appearance.boxShadow;
+      }
+      if (mainTexture) {
+        mainTexture.innerHTML = appearance.textureHtml;
+      }
+
+      const mainFace = document.getElementById('wakppuFace');
+      if (mainFace) {
+        mainFace.innerHTML = renderWakppuFaceSvg('happy');
+      }
+
+      const innerContainer = document.getElementById('wakppuInnerParticles');
+      innerContainer.innerHTML = '';
+
+      if (wakppuIngredients.length === 0) {
+        wakppuIngredients.push('chicken');
+        updateWakppuUI();
+      }
+
+      wakppuIngredients.forEach((id, i) => {
+        const ing = INGREDIENTS_CATALOG[id];
+        if (!ing) return;
+        const span = document.createElement('div');
+        span.className = 'absolute text-2xl animate-spin';
+        span.style.animationDuration = `${4 + (i % 5)}s`;
+        const radius = 30 + (i * 14) % 55;
+        const angle = (i * (360 / Math.max(wakppuIngredients.length, 1))) * (Math.PI / 180);
+        span.style.transform = `translate(${Math.cos(angle) * radius}px, ${Math.sin(angle) * radius}px)`;
+        span.innerText = ing.icon;
+        innerContainer.appendChild(span);
+      });
+
+      const listContainer = document.getElementById('showcaseIngredientsList');
+      listContainer.innerHTML = '';
+      wakppuIngredients.forEach((id) => {
+        const ing = INGREDIENTS_CATALOG[id];
+        if (!ing) return;
+        const chip = document.createElement('button');
+        chip.className = 'px-2.5 py-1 rounded-xl text-xs font-bold bg-white/10 hover:bg-white/20 text-white flex items-center gap-1.5 transition active:scale-95 border border-white/10';
+        chip.innerHTML = `${ing.icon} <span>${ing.name}</span>`;
+        chip.onclick = () => {
+          playIngredientSound(ing.soundType);
+          const ind = document.getElementById('soundPlayIndicator');
+          ind.innerHTML = `${ing.icon} [${ing.name}] ${ing.desc} 연주!`;
+        };
+        listContainer.appendChild(chip);
+      });
+
+      modal.classList.remove('hidden');
+      playSound('correct');
+    }
+
+    function openWakppuModal() {
+      openWakppuShowcaseModal();
+    }
+
+    function closeWakppuShowcaseModal() {
+      stopWakppuSong();
+      document.getElementById('wakppuShowcaseModal').classList.add('hidden');
+    }
+
+    // 노래 연주 엔진
+    let isSongPlaying = false;
+    let songIntervalId = null;
+    let songTick = 0;
+
+    const FREQS = {
+      C2: 65.41, D2: 73.42, E2: 82.41, F2: 87.31, G2: 98.00, A2: 110.00, B2: 123.47,
+      C3: 130.81, D3: 146.83, E3: 164.81, F3: 174.61, G3: 196.00, A3: 220.00, B3: 246.94,
+      C4: 261.63, D4: 293.66, E4: 329.63, F4: 349.23, G4: 392.00, A4: 440.00, B4: 493.88,
+      C5: 523.25, D5: 587.33, E5: 659.25, F5: 698.46, G5: 783.99, A5: 880.00, B5: 987.77,
+      C6: 1046.50, D6: 1174.66, E6: 1318.51, G6: 1567.98
+    };
+
+    const CHORD_PROGRESSION = [
+      { root: 'C3', bass: 'C2', notes: ['C4', 'E4', 'G4'] },
+      { root: 'G3', bass: 'G2', notes: ['B3', 'D4', 'G4'] },
+      { root: 'A3', bass: 'A2', notes: ['C4', 'E4', 'A4'] },
+      { root: 'F3', bass: 'F2', notes: ['C4', 'F4', 'A4'] }
+    ];
+
+    function toggleWakppuSong() {
+      if (isSongPlaying) {
+        stopWakppuSong();
+      } else {
+        startWakppuSong();
+      }
+    }
+
+    function startWakppuSong() {
+      try {
+        const aCtx = getAudioContext();
+        if (aCtx.state === 'suspended') {
+          aCtx.resume();
+        }
+      } catch (e) {}
+
+      isSongPlaying = true;
+      songTick = 0;
+
+      const btn = document.getElementById('wakppuSongPlayBtn');
+      const btnText = document.getElementById('wakppuSongPlayBtnText');
+      const ball = document.getElementById('interactiveWakppuBall');
+      const trackTitle = document.getElementById('songTrackTitle');
+
+      if (btn) {
+        btn.classList.remove('from-amber-400', 'via-pink-500', 'to-indigo-600');
+        btn.classList.add('from-rose-500', 'to-red-600', 'ring-4', 'ring-pink-300');
+      }
+      if (btnText) {
+        btnText.innerText = '노래 멈추기 ⏹️';
+      }
+      if (ball) {
+        ball.classList.add('dancing-wakppu');
+      }
+
+      const starter = STARTER_WAKPPU_CATALOG[selectedStarterKey] || STARTER_WAKPPU_CATALOG.pink;
+      const sName = studentName || '수학이';
+      if (trackTitle) {
+        trackTitle.innerText = `🎶 ${sName}의 [${starter.name}와 ${wakppuIngredients.length}가지 재료·음식 송]`;
+      }
+
+      const STEP_INTERVAL_MS = 240;
+      playSongBeatStep();
+      songIntervalId = setInterval(playSongBeatStep, STEP_INTERVAL_MS);
+    }
+
+    function stopWakppuSong() {
+      if (!isSongPlaying) return;
+      isSongPlaying = false;
+      if (songIntervalId) {
+        clearInterval(songIntervalId);
+        songIntervalId = null;
+      }
+
+      const btn = document.getElementById('wakppuSongPlayBtn');
+      const btnText = document.getElementById('wakppuSongPlayBtnText');
+      const ball = document.getElementById('interactiveWakppuBall');
+      const indicator = document.getElementById('soundPlayIndicator');
+
+      if (btn) {
+        btn.classList.remove('from-rose-500', 'to-red-600', 'ring-4', 'ring-pink-300');
+        btn.classList.add('from-amber-400', 'via-pink-500', 'to-indigo-600');
+      }
+      if (btnText) {
+        btnText.innerText = '왁뿌볼 노래 연주 시작! 🎶';
+      }
+      if (ball) {
+        ball.classList.remove('dancing-wakppu');
+      }
+      if (indicator) {
+        indicator.innerHTML = '👆 왁뿌볼을 톡 건드리거나 노래를 틀어보세요!';
+      }
+
+      resetEqualizerBars();
+    }
+
+    function playSongBeatStep() {
+      if (!isSongPlaying) return;
+
+      const aCtx = getAudioContext();
+      const now = aCtx.currentTime;
+
+      const stepInLoop = songTick % 32;
+      const currentBar = Math.floor(stepInLoop / 8);
+      const isSubBeat = (stepInLoop % 2) === 1;
+
+      const chord = CHORD_PROGRESSION[currentBar];
+      const starter = STARTER_WAKPPU_CATALOG[selectedStarterKey] || STARTER_WAKPPU_CATALOG.pink;
+
+      if (!isSubBeat) {
+        playSynthKick(aCtx, now);
+      }
+
+      if (stepInLoop % 4 === 0 || stepInLoop % 4 === 3) {
+        playSynthBass(aCtx, now, FREQS[chord.bass] || 65.4);
+      }
+
+      playStarterHarmony(aCtx, now, starter, chord, stepInLoop);
+      playIngredientInstrumentsInSong(aCtx, now, chord, stepInLoop);
+      updateMusicVisuals(stepInLoop);
+
+      songTick++;
+    }
+
+    function playSynthKick(aCtx, now) {
+      const osc = aCtx.createOscillator();
+      const gain = aCtx.createGain();
+      osc.frequency.setValueAtTime(140, now);
+      osc.frequency.exponentialRampToValueAtTime(38, now + 0.09);
+      gain.gain.setValueAtTime(0.35, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+      osc.connect(gain);
+      gain.connect(aCtx.destination);
+      osc.start(now);
+      osc.stop(now + 0.13);
+    }
+
+    function playSynthBass(aCtx, now, freq) {
+      const osc = aCtx.createOscillator();
+      const filter = aCtx.createBiquadFilter();
+      const gain = aCtx.createGain();
+
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(freq, now);
+
+      filter.type = 'lowpass';
+      filter.frequency.setValueAtTime(380, now);
+      filter.frequency.exponentialRampToValueAtTime(120, now + 0.18);
+
+      gain.gain.setValueAtTime(0.28, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+
+      osc.connect(filter);
+      filter.connect(gain);
+      gain.connect(aCtx.destination);
+
+      osc.start(now);
+      osc.stop(now + 0.22);
+    }
+
+    function playStarterHarmony(aCtx, now, starter, chord, step) {
+      const noteIdx = step % chord.notes.length;
+      const noteName = chord.notes[noteIdx];
+      const freq = FREQS[noteName] || 440;
+
+      const osc = aCtx.createOscillator();
+      const gain = aCtx.createGain();
+
+      if (starter.id === 'pink') {
+        osc.type = 'sine';
+        gain.gain.setValueAtTime(0.18, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+      } else if (starter.id === 'purple') {
+        osc.type = 'triangle';
+        gain.gain.setValueAtTime(0.15, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
+      } else if (starter.id === 'blue') {
+        osc.type = 'sawtooth';
+        const filter = aCtx.createBiquadFilter();
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(1200, now);
+        filter.frequency.exponentialRampToValueAtTime(400, now + 0.14);
+        gain.gain.setValueAtTime(0.12, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+        osc.connect(filter);
+        filter.connect(gain);
+        gain.connect(aCtx.destination);
+        osc.start(now);
+        osc.stop(now + 0.16);
+        return;
+      } else {
+        osc.type = 'sine';
+        gain.gain.setValueAtTime(0.16, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
+      }
+
+      osc.frequency.setValueAtTime(freq, now);
+      osc.connect(gain);
+      gain.connect(aCtx.destination);
+      osc.start(now);
+      osc.stop(now + 0.2);
+    }
+
+    function playIngredientInstrumentsInSong(aCtx, now, chord, step) {
+      const stepInBar = step % 8;
+
+      // 🍗 바삭 치킨 / 🍪 쿠키 크런치 (스네어 비트)
+      if (wakppuIngredients.includes('chicken') || wakppuIngredients.includes('lightning')) {
+        if (stepInBar === 2 || stepInBar === 6) {
+          playIngredientSound('fried_crunch');
+        }
+      }
+
+      // 🥤 탄산 사이다 (상쾌한 촤아아 하이햇)
+      if (wakppuIngredients.includes('soda')) {
+        if (stepInBar % 2 === 1) {
+          playIngredientSound('fizzy_soda');
+        }
+      }
+
+      // 🥩 바비큐 (지글지글 그루브 필터)
+      if (wakppuIngredients.includes('bbq')) {
+        if (stepInBar === 0 || stepInBar === 4) {
+          playIngredientSound('grill_sizzle');
+        }
+      }
+
+      // 🌟 별사탕 (반짝이는 글록켄슈필)
+      if (wakppuIngredients.includes('star')) {
+        if (stepInBar === 0 || stepInBar === 3 || stepInBar === 5) {
+          const melodyNotes = ['E5', 'G5', 'C6', 'D6', 'E6', 'G6'];
+          const mNote = melodyNotes[(step + Math.floor(step / 4)) % melodyNotes.length];
+          playBellNote(aCtx, now, FREQS[mNote] || 880, 0.14, 0.35);
+        }
+      }
+
+      // 🫧 뽁뽁이 비닐
+      if (wakppuIngredients.includes('bubble')) {
+        if (stepInBar % 2 === 1) {
+          playIngredientSound('bubble');
+        }
+      }
+
+      // 🍂 낙엽
+      if (wakppuIngredients.includes('rainbow')) {
+        if (stepInBar === 1 || stepInBar === 4 || stepInBar === 7) {
+          playIngredientSound('leaves');
+        }
+      }
+
+      // 📜 종이볼
+      if (wakppuIngredients.includes('cat')) {
+        if (stepInBar === 2 || stepInBar === 4) {
+          const catNote = chord.notes[1] || 'E4';
+          playBellNote(aCtx, now, (FREQS[catNote] || 330) * 1.5, 0.15, 0.1);
+        }
+      }
+
+      // ❄️ 눈송이
+      if (wakppuIngredients.includes('pudding')) {
+        if (stepInBar === 0 || stepInBar === 4) {
+          playIngredientSound('snow');
+          playBellNote(aCtx, now, FREQS['C6'] || 1046, 0.12, 0.45);
+        }
+      }
+    }
+
+    function playBellNote(aCtx, now, freq, volume = 0.15, duration = 0.3) {
+      const osc = aCtx.createOscillator();
+      const gain = aCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, now);
+      gain.gain.setValueAtTime(volume, now);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+      osc.connect(gain);
+      gain.connect(aCtx.destination);
+      osc.start(now);
+      osc.stop(now + duration + 0.05);
+    }
+
+    function updateMusicVisuals(step) {
+      const face = document.getElementById('wakppuFace');
+      const indicator = document.getElementById('soundPlayIndicator');
+
+      if (step % 4 === 0 && face) {
+        const danceMoods = ['excited', 'wink', 'sparkle', 'happy', 'starry', 'yummy'];
+        const m = danceMoods[(step / 4) % danceMoods.length];
+        face.innerHTML = renderWakppuFaceSvg(m);
+      }
+
+      if (indicator) {
+        const lyrics = [
+          '🎶 퐁! 퐁! 바스락~ 맛있는 왁뿌 댄스 파티! 🍗',
+          '✨ 정답을 맞혀 모은 재료 & 음식들의 맛있는 하모니! 🍕',
+          '🥁 쿵-치-바삭! 지글지글 신나게 춤추는 왁뿌볼! 🥩',
+          '🥤 점대칭도형을 완성하니 톡톡 탄산 노래가 팡팡! 🎶'
+        ];
+        indicator.innerHTML = lyrics[Math.floor(step / 8) % lyrics.length];
+      }
+
+      animateEqualizerBars(step);
+
+      if (step % 2 === 0) {
+        spawnFloatingNote();
+      }
+    }
+
+    function animateEqualizerBars(step) {
+      for (let i = 1; i <= 5; i++) {
+        const bar = document.getElementById(`eqBar${i}`);
+        if (bar) {
+          const heights = [8, 16, 24, 12, 20, 6, 22, 14];
+          const h = heights[(step * i) % heights.length];
+          bar.style.height = `${h}px`;
+        }
+      }
+    }
+
+    function resetEqualizerBars() {
+      for (let i = 1; i <= 5; i++) {
+        const bar = document.getElementById(`eqBar${i}`);
+        if (bar) bar.style.height = '6px';
+      }
+    }
+
+    function spawnFloatingNote() {
+      const box = document.getElementById('floatingNotesBox');
+      if (!box) return;
+
+      const noteIcons = ['🎵', '🎶', '✨', '⭐', '🍗', '🍕', '🥤', '💫'];
+      const colors = ['#f472b6', '#fbbf24', '#34d399', '#38bdf8', '#c084fc', '#f97316'];
+      
+      const span = document.createElement('div');
+      span.className = 'music-note-particle text-xl';
+      span.innerText = noteIcons[Math.floor(Math.random() * noteIcons.length)];
+      span.style.color = colors[Math.floor(Math.random() * colors.length)];
+      
+      const offsetX = (Math.random() - 0.5) * 140;
+      const offsetY = (Math.random() - 0.5) * 80;
+      span.style.transform = `translate(${offsetX}px, ${offsetY}px)`;
+
+      box.appendChild(span);
+      setTimeout(() => {
+        if (span.parentNode) span.parentNode.removeChild(span);
+      }, 1200);
+    }
+
+    let wakppuClickCount = 0;
+    function interactWakppuBall(e) {
+      if (e) e.preventDefault();
+      const ball = document.getElementById('interactiveWakppuBall');
+      const face = document.getElementById('wakppuFace');
+      const indicator = document.getElementById('soundPlayIndicator');
+
+      ball.classList.remove('jelly-active');
+      void ball.offsetWidth;
+      ball.classList.add('jelly-active');
+
+      const moods = ['wink', 'excited', 'cat', 'starry', 'sparkle', 'proud', 'yummy'];
+      const randMood = moods[Math.floor(Math.random() * moods.length)];
+      if (face) face.innerHTML = renderWakppuFaceSvg(randMood);
+
+      playWakppuCustomCompositeSound();
+
+      if (wakppuIngredients.length === 0) {
+        indicator.innerHTML = "바스락! 아직 아이템이 없어요. 문제를 풀어 재료를 모아보세요.";
+        return;
+      }
+
+      wakppuClickCount++;
+      const targetId = wakppuIngredients[(wakppuClickCount - 1) % wakppuIngredients.length];
+      const ing = INGREDIENTS_CATALOG[targetId];
+      indicator.innerHTML = `${ing.icon} <b>${ing.name}</b>의 <b>[${ing.desc}]</b>와 바운스 하모니!`;
+    }
+
+    function toggleHint() {
+      if (!isHintUnlocked) return;
+
+      showHint = !showHint;
+      const hintBtn = document.getElementById('hintBtn');
+      if (showHint) {
+        hintBtn.innerHTML = '<i class="fa-solid fa-eye-slash"></i> 힌트선 숨기기';
+        hintBtn.className = 'px-3.5 py-2 bg-amber-500 hover:bg-amber-600 text-white text-xs sm:text-sm font-bold rounded-xl transition flex items-center gap-1.5 border border-amber-600 shadow touch-btn active:scale-95';
+      } else {
+        hintBtn.innerHTML = '<i class="fa-regular fa-eye"></i> 힌트선 보기';
+        hintBtn.className = 'px-3.5 py-2 bg-amber-100 hover:bg-amber-200 text-amber-800 text-xs sm:text-sm font-bold rounded-xl transition flex items-center gap-1.5 border border-amber-300 touch-btn active:scale-95';
+      }
+      renderCanvas();
+    }
+
+    function unlockHintButton() {
+      isHintUnlocked = true;
+      const hintBtn = document.getElementById('hintBtn');
+      hintBtn.disabled = false;
+      hintBtn.innerHTML = '<i class="fa-regular fa-eye"></i> 힌트선 보기';
+      hintBtn.className = 'px-3.5 py-2 bg-amber-100 hover:bg-amber-200 text-amber-800 text-xs sm:text-sm font-bold rounded-xl transition flex items-center gap-1.5 border border-amber-300 animate-bounce touch-btn active:scale-95';
+    }
+
+    function playRotationAnimation() {
+      if (isRotating) return;
+      isRotating = true;
+      const spinBtn = document.getElementById('spinBtn');
+      const banner = document.getElementById('rotatingBanner');
+      
+      spinBtn.disabled = true;
+      spinBtn.classList.add('opacity-50');
+      banner.classList.remove('hidden');
+
+      const startTime = performance.now();
+      const duration = 2000;
+
+      function animate(time) {
+        const elapsed = time - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        
+        const ease = progress < 0.5 
+          ? 4 * progress * progress * progress 
+          : 1 - Math.pow(-2 * progress + 2, 3) / 2;
+
+        rotationAngle = ease * Math.PI;
+        renderCanvas();
+
+        if (progress < 1) {
+          requestAnimationFrame(animate);
+        } else {
+          setTimeout(() => {
+            const returnStart = performance.now();
+            const returnDuration = 800;
+
+            function returnAnimate(rtTime) {
+              const rElapsed = rtTime - returnStart;
+              const rProgress = Math.min(rElapsed / returnDuration, 1);
+              const rEase = 1 - Math.pow(1 - rProgress, 3);
+              rotationAngle = (1 - rEase) * Math.PI;
+              renderCanvas();
+
+              if (rProgress < 1) {
+                requestAnimationFrame(returnAnimate);
+              } else {
+                rotationAngle = 0;
+                isRotating = false;
+                spinBtn.disabled = false;
+                spinBtn.classList.remove('opacity-50');
+                banner.classList.add('hidden');
+                renderCanvas();
+              }
+            }
+            requestAnimationFrame(returnAnimate);
+          }, 800);
+        }
+      }
+
+      requestAnimationFrame(animate);
+    }
+
+    function updateLevelTabUI() {
+      const p1 = document.getElementById('diffProgress1');
+      if (p1) p1.innerText = `(${Math.min(solvedPerLevel[1], 5)}/5)`;
+
+      const btn2 = document.getElementById('diffBtn2');
+      if (btn2) {
+        if (unlockedLevels.includes(2)) {
+          btn2.disabled = false;
+          btn2.className = currentDifficulty === 2 
+            ? 'diff-btn px-3.5 py-2 text-xs sm:text-sm font-bold rounded-xl transition bg-indigo-600 text-white shadow touch-btn'
+            : 'diff-btn px-3.5 py-2 text-xs sm:text-sm font-bold rounded-xl transition bg-slate-200 text-slate-700 hover:bg-slate-300 touch-btn';
+          btn2.innerHTML = `2단계 (응용) <span id="diffProgress2" class="text-[11px] font-normal">(${Math.min(solvedPerLevel[2], 5)}/5)</span>`;
+        } else {
+          btn2.disabled = true;
+          btn2.className = 'diff-btn px-3.5 py-2 text-xs sm:text-sm font-bold rounded-xl transition bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed touch-btn';
+          btn2.innerHTML = `<i class="fa-solid fa-lock text-[11px] mr-1"></i>2단계 (응용) <span id="diffProgress2" class="text-[11px]">(${Math.min(solvedPerLevel[1], 5)}/5)</span>`;
+        }
+      }
+
+      const btn3 = document.getElementById('diffBtn3');
+      if (btn3) {
+        if (unlockedLevels.includes(3)) {
+          btn3.disabled = false;
+          btn3.className = currentDifficulty === 3
+            ? 'diff-btn px-3.5 py-2 text-xs sm:text-sm font-bold rounded-xl transition bg-indigo-600 text-white shadow touch-btn'
+            : 'diff-btn px-3.5 py-2 text-xs sm:text-sm font-bold rounded-xl transition bg-slate-200 text-slate-700 hover:bg-slate-300 touch-btn';
+          btn3.innerHTML = `✨ 3단계 (심화 무제한)`;
+        } else {
+          btn3.disabled = true;
+          btn3.className = 'diff-btn px-3.5 py-2 text-xs sm:text-sm font-bold rounded-xl transition bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed touch-btn';
+          btn3.innerHTML = `<i class="fa-solid fa-lock text-[11px] mr-1"></i>3단계 (심화 무제한)`;
+        }
+      }
+
+      const btn1 = document.getElementById('diffBtn1');
+      if (btn1) {
+        if (currentDifficulty === 1) {
+          btn1.className = 'diff-btn px-3.5 py-2 text-xs sm:text-sm font-bold rounded-xl transition bg-indigo-600 text-white shadow touch-btn';
+        } else {
+          btn1.className = 'diff-btn px-3.5 py-2 text-xs sm:text-sm font-bold rounded-xl transition bg-slate-200 text-slate-700 hover:bg-slate-300 touch-btn';
+        }
+      }
+    }
+
+    function updateStats() {
+      document.getElementById('scoreDisplay').innerText = `${score}점`;
+      document.getElementById('streakDisplay').innerText = `🔥 ${streak}`;
+      document.getElementById('solvedCount').innerText = `${correctCount}개`;
+      
+      const acc = totalAttempts > 0 ? Math.round((correctCount / totalAttempts) * 100) : 100;
+      document.getElementById('accuracyRate').innerText = `${acc}%`;
+    }
+
+    function showCustomFeedback(isSuccess, title, desc, earnedScore = 0, isLevelUp = false, nextLevelToJump = 0) {
+      const modal = document.getElementById('feedbackModal');
+      const modalIcon = document.getElementById('modalIcon');
+      const modalTitle = document.getElementById('modalTitle');
+      const modalDesc = document.getElementById('modalDesc');
+      const scoreBox = document.getElementById('scoreEarnedBox');
+      const actionBtn = document.getElementById('modalActionBtn');
+
+      modalTitle.innerText = title;
+      modalDesc.innerText = desc;
+
+      if (isSuccess) {
+        modalIcon.className = 'w-16 h-16 mx-auto rounded-2xl bg-emerald-100 text-emerald-500 flex items-center justify-center text-3xl mb-4';
+        modalIcon.innerHTML = isLevelUp ? '<i class="fa-solid fa-award text-amber-500"></i>' : '<i class="fa-solid fa-medal"></i>';
+        scoreBox.classList.remove('hidden');
+        document.getElementById('earnedScoreText').innerText = `+${earnedScore}점 획득! 연속 정답: ${streak}회`;
+
+        if (isLevelUp) {
+          actionBtn.innerText = `${nextLevelToJump}단계로 바로 이동!`;
+          actionBtn.onclick = () => {
+            closeModalOnly();
+            changeDifficulty(nextLevelToJump);
+          };
+        } else {
+          actionBtn.innerText = "다음 문제 도전!";
+          actionBtn.onclick = closeFeedbackAndNext;
+        }
+      } else {
+        modalIcon.className = 'w-16 h-16 mx-auto rounded-2xl bg-rose-100 text-rose-500 flex items-center justify-center text-3xl mb-4';
+        modalIcon.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i>';
+        scoreBox.classList.add('hidden');
+        actionBtn.innerText = "다시 고쳐보기";
+        actionBtn.onclick = closeModalOnly;
+      }
+
+      modal.classList.remove('hidden');
+    }
+
+    // "내 도형 보기" 버튼 클릭 시 실행: 모달만 닫고 캔버스는 그대로 보존하여 재채점 방지
+    function handleViewMyDrawingOnly() {
+      closeModalOnly();
+      updateProgressUI();
+    }
+
+    function closeModalOnly() {
+      document.getElementById('feedbackModal').classList.add('hidden');
+    }
+
+    function closeFeedbackAndNext() {
+      closeModalOnly();
+      loadNewQuestion();
+    }
+
+    function openConceptModal() {
+      document.getElementById('conceptModal').classList.remove('hidden');
+    }
+
+    function closeConceptModal() {
+      document.getElementById('conceptModal').classList.add('hidden');
+    }
+
+    function changeDifficulty(level) {
+      if (!unlockedLevels.includes(level)) {
+        if (level === 2) {
+          showCustomFeedback(false, "2단계 잠김 🔒", `1단계 문제를 5문제 맞혀야 2단계가 열립니다! (현재 1단계 맞힌 수: ${solvedPerLevel[1]}/5)`);
+        } else if (level === 3) {
+          showCustomFeedback(false, "3단계 잠김 🔒", `2단계 문제를 5문제 맞혀야 3단계(심화)가 열립니다! (현재 2단계 맞힌 수: ${solvedPerLevel[2]}/5)`);
+        }
+        return;
+      }
+
+      if (currentDifficulty === level) return;
+      currentDifficulty = level;
+      currentQuestionIndex = 0;
+
+      updateLevelTabUI();
+
+      const badge = document.getElementById('currentLevelBadge');
+      if (level === 1) badge.innerText = "1단계 (기본)";
+      else if (level === 2) badge.innerText = "2단계 (응용)";
+      else if (level === 3) badge.innerText = "3단계 (심화 무제한)";
+
+      updateWakppuUI();
+      loadQuestion();
+    }
+
+    function loadNewQuestion() {
+      currentQuestionIndex++;
+      loadQuestion();
+    }
+
+    function loadQuestion() {
+      userPoints = [];
+      userEdges = [];
+      freehandStrokes = [];
+      currentStroke = null;
+      selectedLineStartPoint = null;
+      showHint = false;
+      isHintUnlocked = false;
+      rotationAngle = 0;
+      isRotating = false;
+      isCurrentQuestionGraded = false; // 새로운 문제 로드 시 채점 완료 플래그 리셋
+
+      document.getElementById('shapeClosedBadge').classList.add('hidden');
+      setCurrentTool('point');
+
+      const hintBtn = document.getElementById('hintBtn');
+      hintBtn.disabled = true;
+      hintBtn.innerHTML = '<i class="fa-solid fa-lock text-[11px]"></i> 오답 시 힌트 제공';
+      hintBtn.className = 'px-3.5 py-2 bg-slate-200 text-slate-400 text-xs sm:text-sm font-bold rounded-xl transition flex items-center gap-1.5 border border-slate-300 cursor-not-allowed touch-btn active:scale-95';
+
+      const q = getCurrentQuestion();
+      const list = QUESTION_BANK[currentDifficulty];
+      const qNumText = currentDifficulty === 3 ? `[심화 Q${(currentQuestionIndex % list.length) + 1}] ` : `[Q${(currentQuestionIndex % list.length) + 1}] `;
+      
+      document.getElementById('questionTitle').innerText = qNumText + q.title;
+      document.getElementById('questionDescription').innerText = q.desc;
+
+      updateProgressUI();
+      renderCanvas();
+    }
+
+    function handleStartGame(e) {
+      e.preventDefault();
+      const input = document.getElementById('studentNameInput');
+      const val = input.value.trim();
+      if (!val) return;
+
+      studentName = val;
+      document.getElementById('headerStudentName').innerText = studentName;
+      document.getElementById('headerStudentBadge').classList.remove('hidden');
+      document.getElementById('startScreenModal').classList.add('hidden');
+      
+      try {
+        getAudioContext();
+      } catch (err) {}
+
+      updateWakppuUI(true);
+      resizeCanvas();
+    }
+
+    function openFinalReport() {
+      const modal = document.getElementById('finalReportModal');
+      document.getElementById('reportStudentName').innerText = studentName || "학생";
+      document.getElementById('reportScore').innerText = `${score}점`;
+      document.getElementById('reportSolvedCount').innerText = `${correctCount}개`;
+      
+      const acc = totalAttempts > 0 ? Math.round((correctCount / totalAttempts) * 100) : 100;
+      document.getElementById('reportAccuracy').innerText = `${acc}%`;
+
+      let title = "점대칭도형 새싹 🌱";
+      if (score >= 1200 || correctCount >= 10) {
+        title = "점대칭도형 그리기 대가 👑";
+      } else if (score >= 800 || correctCount >= 7) {
+        title = "점대칭도형 마스터 🏆";
+      } else if (score >= 400 || correctCount >= 4) {
+        title = "점대칭도형 모험가 ⭐";
+      }
+      document.getElementById('reportBadgeTitle').innerText = title;
+
+      modal.classList.remove('hidden');
+    }
+
+    function closeFinalReport() {
+      document.getElementById('finalReportModal').classList.add('hidden');
+    }
+
+    function restartApp() {
+      document.getElementById('finalReportModal').classList.add('hidden');
+      document.getElementById('startScreenModal').classList.remove('hidden');
+      score = 0;
+      streak = 0;
+      totalAttempts = 0;
+      correctCount = 0;
+      solvedPerLevel[1] = 0;
+      solvedPerLevel[2] = 0;
+      solvedPerLevel[3] = 0;
+      unlockedLevels.length = 0;
+      unlockedLevels.push(1);
+      currentDifficulty = 1;
+      currentQuestionIndex = 0;
+      wakppuIngredients = [];
+      isCurrentQuestionGraded = false;
+      updateStats();
+      updateLevelTabUI();
+      updateWakppuUI();
+      loadQuestion();
+    }
+
+    window.onload = function () {
+      resizeCanvas();
+      updateLevelTabUI();
+      updateWakppuUI();
+      loadQuestion();
+      window.addEventListener('resize', resizeCanvas);
+      window.addEventListener('orientationchange', () => {
+        setTimeout(resizeCanvas, 200);
+      });
+    };
+  </script>
+</body>
+</html>
